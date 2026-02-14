@@ -1,0 +1,7 @@
+{
+  "AUTH_MODE": "worker",
+  "AUTH_API_BASE_URL": "https://hmatt-auth-worker.email1-hammad.workers.dev",
+  "AUTH_API_KEY": "hmatt_app_6f8c2d4a9b1e3f7c0d5a8e2b1f4c9a7d",
+  "GOOGLE_WEB_CLIENT_ID": "684951596815-juj5aheqn1sca17i6n8blqvnprnlvcsi.apps.googleusercontent.com",
+  "UPDATE_CONFIG_URL": "https://example.com/version.json"
+}
