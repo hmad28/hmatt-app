@@ -23,11 +23,39 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage>
   final _registerSecurityQuestionController = TextEditingController();
   final _registerSecurityAnswerController = TextEditingController();
   String? _lastOwnerMessageShown;
+  ProviderSubscription<AsyncValue<OwnerDashboardState>>? _ownerListener;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _ownerListener = ref.listenManual<AsyncValue<OwnerDashboardState>>(
+      ownerDashboardProvider,
+      (previous, next) {
+        if (!mounted) {
+          return;
+        }
+        final session = ref.read(authControllerProvider).valueOrNull;
+        final ownerBroadcast = _resolveVisibleOwnerMessage(
+          next.valueOrNull,
+          session?.userId,
+        );
+        if (ownerBroadcast == null ||
+            ownerBroadcast.isEmpty ||
+            ownerBroadcast == _lastOwnerMessageShown) {
+          return;
+        }
+        _lastOwnerMessageShown = ownerBroadcast;
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Notifikasi owner: $ownerBroadcast'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -39,6 +67,7 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage>
     _registerPasswordController.dispose();
     _registerSecurityQuestionController.dispose();
     _registerSecurityAnswerController.dispose();
+    _ownerListener?.close();
     super.dispose();
   }
 
@@ -46,30 +75,7 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage>
   Widget build(BuildContext context) {
     final authAsync = ref.watch(authControllerProvider);
     final isLoading = authAsync.isLoading;
-    final ownerState = ref.watch(ownerDashboardProvider).valueOrNull;
-    final session = authAsync.valueOrNull;
-    final ownerBroadcast = _resolveVisibleOwnerMessage(
-      ownerState,
-      session?.userId,
-    );
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted ||
-          ownerBroadcast == null ||
-          ownerBroadcast.isEmpty ||
-          ownerBroadcast == _lastOwnerMessageShown) {
-        return;
-      }
-      _lastOwnerMessageShown = ownerBroadcast;
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Notifikasi owner: $ownerBroadcast'),
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    });
+    ref.watch(ownerDashboardProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -302,7 +308,7 @@ class _RegisterForm extends StatelessWidget {
           controller: passwordController,
           obscureText: true,
           decoration: const InputDecoration(
-            labelText: 'Password (minimal 4 karakter)',
+            labelText: 'Password (minimal 8 karakter)',
           ),
         ),
         const SizedBox(height: 12),

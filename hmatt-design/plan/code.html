@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financial Planning List - Hmatt 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0f756d",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#112120",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c2a",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased selection:bg-primary/30">
+<div class="mx-auto flex h-screen w-full max-w-md flex-col overflow-hidden bg-background-light dark:bg-background-dark relative shadow-2xl">
+<!-- Header -->
+<header class="flex items-center justify-between px-6 pt-12 pb-4 bg-surface-light dark:bg-surface-dark sticky top-0 z-10 border-b border-slate-100 dark:border-slate-800">
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white">Perencanaan Keuangan</h1>
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto no-scrollbar pb-24">
+<!-- Filters -->
+<div class="sticky top-0 z-0 bg-background-light dark:bg-background-dark pt-4 pb-2">
+<div class="flex gap-3 overflow-x-auto px-6 pb-2 no-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-primary px-5 transition-colors">
+<span class="text-sm font-semibold text-white">Semua</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 px-5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50">
+<span class="text-sm font-medium text-slate-600 dark:text-slate-300">Aktif</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 px-5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50">
+<span class="text-sm font-medium text-slate-600 dark:text-slate-300">Selesai</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 px-5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50">
+<span class="text-sm font-medium text-slate-600 dark:text-slate-300">Dibatalkan</span>
+</button>
+</div>
+</div>
+<!-- List -->
+<div class="flex flex-col gap-4 px-6 mt-2">
+<!-- Plan Card 1: Umroh (Active + Auto-track) -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark p-5 shadow-sm transition-all hover:shadow-md border border-slate-100 dark:border-slate-800">
+<div class="mb-4 flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
+                                🕋
+                            </div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white leading-tight text-lg">Tabungan Umroh</h3>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Prioritas Tinggi</p>
+</div>
+</div>
+<div class="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+<span class="material-symbols-outlined text-[14px]">autorenew</span>
+                            Auto-track
+                        </div>
+</div>
+<div class="mb-2 flex items-end justify-between">
+<div class="flex flex-col">
+<span class="text-xs text-slate-500 dark:text-slate-400 mb-1">Terkumpul</span>
+<span class="text-lg font-bold text-primary">Rp 15.000.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-slate-500 dark:text-slate-400 mb-1">Target</span>
+<span class="text-sm font-semibold text-slate-900 dark:text-slate-200">Rp 35.000.000</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+<div class="absolute left-0 top-0 h-full w-[42%] rounded-full bg-primary transition-all duration-500"></div>
+</div>
+<div class="mt-3 flex items-center justify-between border-t border-slate-50 dark:border-slate-800 pt-3">
+<div class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[16px]">calendar_clock</span>
+                            120 Hari Lagi
+                        </div>
+<span class="text-xs font-bold text-primary">42%</span>
+</div>
+</div>
+<!-- Plan Card 2: Laptop (Active) -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark p-5 shadow-sm transition-all hover:shadow-md border border-slate-100 dark:border-slate-800">
+<div class="mb-4 flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-2xl">
+                                💻
+                            </div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white leading-tight text-lg">Upgrade Laptop</h3>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Produktivitas</p>
+</div>
+</div>
+<!-- No Auto-track badge here -->
+</div>
+<div class="mb-2 flex items-end justify-between">
+<div class="flex flex-col">
+<span class="text-xs text-slate-500 dark:text-slate-400 mb-1">Terkumpul</span>
+<span class="text-lg font-bold text-primary">Rp 4.500.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-slate-500 dark:text-slate-400 mb-1">Target</span>
+<span class="text-sm font-semibold text-slate-900 dark:text-slate-200">Rp 20.000.000</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+<div class="absolute left-0 top-0 h-full w-[22%] rounded-full bg-primary transition-all duration-500"></div>
+</div>
+<div class="mt-3 flex items-center justify-between border-t border-slate-50 dark:border-slate-800 pt-3">
+<div class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[16px]">calendar_clock</span>
+                            45 Hari Lagi
+                        </div>
+<span class="text-xs font-bold text-primary">22%</span>
+</div>
+</div>
+<!-- Plan Card 3: Dana Darurat (Near Complete) -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark p-5 shadow-sm transition-all hover:shadow-md border border-slate-100 dark:border-slate-800">
+<div class="mb-4 flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 dark:bg-orange-900/20 text-2xl">
+                                🛡️
+                            </div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white leading-tight text-lg">Dana Darurat</h3>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Keamanan Finansial</p>
+</div>
+</div>
+<div class="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+<span class="material-symbols-outlined text-[14px]">autorenew</span>
+                            Auto-track
+                        </div>
+</div>
+<div class="mb-2 flex items-end justify-between">
+<div class="flex flex-col">
+<span class="text-xs text-slate-500 dark:text-slate-400 mb-1">Terkumpul</span>
+<span class="text-lg font-bold text-primary">Rp 9.200.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-slate-500 dark:text-slate-400 mb-1">Target</span>
+<span class="text-sm font-semibold text-slate-900 dark:text-slate-200">Rp 10.000.000</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+<div class="absolute left-0 top-0 h-full w-[92%] rounded-full bg-primary transition-all duration-500"></div>
+</div>
+<div class="mt-3 flex items-center justify-between border-t border-slate-50 dark:border-slate-800 pt-3">
+<div class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[16px]">calendar_clock</span>
+                            Bebas Waktu
+                        </div>
+<span class="text-xs font-bold text-primary">92%</span>
+</div>
+</div>
+<!-- Add New Button in List (Optional Call to Action) -->
+<button class="mt-4 mb-8 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-transparent py-4 text-sm font-semibold text-slate-500 dark:text-slate-400 transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary">
+<span class="material-symbols-outlined">add_circle</span>
+                    Buat Rencana Baru
+                </button>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="relative flex w-full flex-col bg-white dark:bg-surface-dark border-t border-slate-100 dark:border-slate-800 pb-5 pt-2 shadow-lg">
+<div class="flex items-end justify-around px-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-[24px] font-variation-settings-fill">assignment</span>
+<span class="text-[10px] font-medium">Plan</span>
+</a>
+<!-- Central Add Button -->
+<div class="relative -top-5 flex flex-col items-center justify-end">
+<button class="flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-white text-[28px]">add</span>
+</button>
+<span class="text-[10px] font-medium text-slate-900 dark:text-slate-100 mt-1">Tambah</span>
+</div>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">pie_chart</span>
+<span class="text-[10px] font-medium">Stats</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

@@ -1,55 +1,263 @@
-Konsep Final Aplikasi Hmatt (Revisi Sederhana)
-Filosofi dan Pendekatan Utama
-Aplikasi Hmatt adalah pencatat keuangan personal berbasis Flutter yang dirancang dengan filosofi "simple, offline, dan langsung berguna". Seluruh konsep sebelumnya yang melibatkan sinkronisasi cloud, Cloudflare Workers, Neon PostgreSQL, dan arsitektur hybrid ditanggalkan sepenuhnya demi satu tujuan utama yaitu membuat aplikasi yang benar-benar jalan, bisa dipakai hari ini, dan tidak bergantung pada koneksi internet sama sekali. Semua data disimpan secara lokal di perangkat pengguna menggunakan SQLite tanpa ada proses sinkronisasi ke server manapun sehingga aplikasi bisa langsung digunakan kapan saja dan di mana saja tanpa memikirkan koneksi. Proses pembuatan akun dibuat sesederhana mungkin yaitu hanya membutuhkan username dan password tanpa perlu email, verifikasi, atau proses onboarding yang rumit sehingga pengguna bisa mulai mencatat keuangan dalam hitungan detik setelah install. Satu-satunya fitur yang membutuhkan koneksi internet adalah pengecekan update aplikasi yang berjalan secara pasif di background dan hanya menampilkan notifikasi kecil beserta tombol update jika ada versi baru yang tersedia. Dengan pendekatan ini, seluruh fokus pengembangan diarahkan pada kualitas pengalaman pencatatan keuangan itu sendiri tanpa terdistraksi oleh kompleksitas infrastruktur backend yang belum dibutuhkan di tahap awal.
+## Konsep Produk Hmatt 2026 (Revisi Menyeluruh)
 
-Arsitektur Teknis
-Arsitektur aplikasi menggunakan pola Repository Pattern sederhana dengan dua lapisan utama yaitu UI Layer dan Data Layer. UI Layer menggunakan widget Flutter yang reaktif untuk menampilkan seluruh antarmuka pengguna mulai dari halaman login, dashboard, pencatatan transaksi, hingga laporan keuangan. State management menggunakan Cubit dari package flutter_bloc karena lebih ringan dan straightforward dibanding Bloc penuh untuk aplikasi dengan kompleksitas menengah seperti ini, di mana setiap layar memiliki Cubit sendiri yang mengelola state secara independen dan predictable. Data Layer hanya memiliki satu sumber data yaitu Local Data Source yang menggunakan SQLite melalui package sqflite sebagai satu-satunya database. Repository menjadi jembatan antara Cubit dan SQLite yang menyediakan method-method bersih seperti getTransactions, addTransaction, dan deleteTransaction tanpa Cubit perlu tahu detail implementasi database di baliknya. Tidak ada Remote Data Source, tidak ada API call untuk data keuangan, dan tidak ada mekanisme sinkronisasi sehingga arsitektur menjadi sangat sederhana, mudah di-debug, dan hampir mustahil mengalami masalah jaringan karena memang tidak ada jaringan yang terlibat dalam operasi inti aplikasi.
+Hmatt adalah aplikasi manajemen keuangan **offline-first** berbasis Flutter untuk Android dan Windows dengan misi utama: membantu pengguna mengambil keputusan finansial harian dengan cepat, tenang, dan konsisten. Produk ini bukan lagi sekadar catatan pemasukan/pengeluaran, tetapi menjadi "sistem kerja keuangan pribadi" yang menggabungkan transaksi, perencanaan, kalender, dan disiplin evaluasi dalam satu alur yang sederhana.
 
-Satu-satunya komponen yang membutuhkan jaringan adalah Update Checker yaitu sebuah service ringan yang berjalan saat aplikasi dibuka. Service ini mengambil sebuah file JSON kecil yang dihosting secara gratis di GitHub Pages atau sebagai raw file di repository GitHub publik. File JSON tersebut hanya berisi dua informasi yaitu nomor versi terbaru dan URL download ke halaman Google Play Store atau link APK langsung. Saat aplikasi dibuka, Update Checker membandingkan versi yang tertulis di file JSON dengan versi aplikasi yang sedang berjalan. Jika versi di JSON lebih baru, aplikasi menampilkan banner kecil di bagian atas dashboard atau bottom sheet non-intrusif yang berisi informasi singkat tentang pembaruan beserta tombol "Update Sekarang" yang mengarahkan pengguna ke Play Store atau link download. Jika koneksi internet tidak tersedia saat pengecekan, service ini gagal secara diam-diam tanpa menampilkan error apapun dan aplikasi tetap berjalan normal sepenuhnya karena fitur ini bersifat opsional dan tidak mempengaruhi fungsi utama pencatatan keuangan.
+Konsep baru ini memperbarui posisi produk dari "aplikasi catatan" menjadi **asisten operasional keuangan pribadi**, sambil tetap mempertahankan kekuatan inti: data lokal, cepat, dan minim ketergantungan internet.
 
-Sistem Akun Lokal
-Sistem akun di Hmatt bersifat sepenuhnya lokal dan dirancang untuk melindungi data keuangan pengguna dari orang lain yang mungkin meminjam atau mengakses perangkat yang sama, bukan sebagai sistem autentikasi cloud. Pengguna membuat akun cukup dengan memasukkan username dan password tanpa memerlukan email, nomor telepon, atau verifikasi apapun. Username berfungsi sebagai identitas tampilan yang akan muncul di dashboard sebagai sapaan personal, sementara password berfungsi sebagai kunci untuk membuka data keuangan pengguna. Password disimpan di SQLite dalam bentuk hash menggunakan algoritma bcrypt melalui package dbcrypt sehingga meskipun seseorang berhasil mengakses file database, password asli tidak bisa diketahui. Saat aplikasi dibuka, pengguna diminta memasukkan username dan password di halaman login, dan aplikasi memvalidasi kredensial tersebut terhadap data yang tersimpan di SQLite lokal.
+---
 
-Aplikasi mendukung lebih dari satu akun lokal di perangkat yang sama sehingga misalnya suami dan istri bisa memiliki catatan keuangan masing-masing dalam satu perangkat tanpa saling melihat data satu sama lain. Halaman login menampilkan daftar username yang sudah terdaftar dan pengguna tinggal memilih lalu memasukkan password, atau bisa membuat akun baru dengan menekan tombol registrasi. Karena tidak ada mekanisme recovery berbasis email atau server, aplikasi menyediakan opsi security question sederhana saat registrasi yang bisa digunakan untuk mereset password jika pengguna lupa. Security question dan jawabannya juga disimpan dalam bentuk hash di database lokal. Session pengguna dikelola menggunakan SharedPreferences yang menyimpan ID pengguna yang sedang login sehingga pengguna tidak perlu login ulang setiap kali membuka aplikasi kecuali mereka secara eksplisit menekan tombol logout atau setelah periode inaktivitas tertentu yang bisa diatur di pengaturan.
+## 1) Positioning dan Prinsip Produk
 
-Konsekuensi dari sistem akun lokal ini adalah jika pengguna menghapus aplikasi atau berganti perangkat, seluruh data akan hilang karena tidak ada backup cloud. Hal ini diakui secara transparan kepada pengguna melalui peringatan saat registrasi dan di halaman pengaturan. Sebagai solusi sementara sebelum fitur cloud dibangun di versi mendatang, aplikasi menyediakan fitur ekspor data ke file JSON atau CSV yang bisa disimpan pengguna secara manual ke Google Drive, penyimpanan lokal, atau media lain sebagai backup pribadi, serta fitur impor data untuk mengembalikan data dari file backup tersebut ke perangkat baru.
+### Positioning
+- **Kategori**: personal finance tracker + planning assistant (offline-first).
+- **Target pengguna utama**:
+  - pekerja harian/bulanan yang ingin kontrol arus kas,
+  - keluarga kecil yang butuh pembagian akun/dompet,
+  - pengguna yang mengutamakan privasi dan performa lokal.
 
-Fitur Inti Pencatatan Keuangan
-Fitur utama aplikasi adalah pencatatan transaksi pemasukan dan pengeluaran yang dirancang untuk bisa dilakukan secepat mungkin. Saat pengguna menekan tombol tambah transaksi, form yang muncul hanya menampilkan empat field utama yaitu nominal, kategori, tanggal yang default ke hari ini, dan catatan yang bersifat opsional. Pengguna bisa menyelesaikan pencatatan satu transaksi dalam waktu kurang dari lima detik karena hanya nominal dan kategori yang wajib diisi sementara tanggal sudah terisi otomatis dan catatan bisa dilewatkan. Kategori transaksi sudah disediakan secara default saat akun dibuat dengan daftar kategori umum seperti Makan, Transportasi, Belanja, Tagihan, Hiburan, dan Kesehatan untuk pengeluaran serta Gaji, Freelance, Investasi, dan Lainnya untuk pemasukan, dan pengguna bisa menambah, mengedit, atau menghapus kategori sesuai kebutuhan melalui halaman pengaturan kategori.
+### Prinsip Produk
+- **Cepat dicatat**: transaksi harus bisa masuk dalam hitungan detik.
+- **Jelas dipahami**: pengguna langsung tahu kondisi uangnya hari ini.
+- **Terencana**: keputusan besar harus ditopang plan, bukan impuls.
+- **Terkendali**: ada evaluasi rutin untuk menjaga disiplin.
+- **Privat**: data tetap di device pengguna, tidak wajib cloud.
 
-Setiap transaksi juga terkait dengan akun atau dompet yang mencerminkan sumber dana pengguna. Saat registrasi, aplikasi secara otomatis membuat satu akun default bernama "Kas" dan pengguna bisa menambahkan akun lain seperti rekening bank tertentu, e-wallet, atau tabungan melalui halaman manajemen akun. Saldo setiap akun dihitung secara otomatis berdasarkan akumulasi transaksi yang terkait dengan akun tersebut sehingga pengguna tidak perlu mengupdate saldo secara manual. Transaksi juga mendukung transfer antar akun yang secara otomatis mengurangi saldo akun asal dan menambah saldo akun tujuan tanpa mempengaruhi total pemasukan atau pengeluaran karena transfer bukan merupakan income maupun expense melainkan perpindahan dana internal.
+---
 
-Dashboard menjadi halaman utama yang langsung ditampilkan setelah login dan menyajikan ringkasan keuangan pengguna dalam tampilan yang bersih dan mudah dipahami. Di bagian atas ditampilkan saldo total yang merupakan penjumlahan saldo seluruh akun pengguna, diikuti ringkasan pemasukan dan pengeluaran bulan berjalan dalam format angka sederhana yang saling berdampingan agar pengguna bisa langsung melihat apakah bulan ini surplus atau defisit. Di bawahnya terdapat grafik pengeluaran per kategori dalam bentuk pie chart atau donut chart yang menunjukkan proporsi pengeluaran di setiap kategori sehingga pengguna langsung tahu ke mana uang mereka paling banyak keluar. Bagian bawah dashboard menampilkan daftar transaksi terbaru lima hingga sepuluh transaksi terakhir yang bisa di-tap untuk melihat detail atau diedit, memberikan pengguna gambaran cepat tentang aktivitas keuangan terkini tanpa harus masuk ke halaman riwayat.
+## 2) North Star dan Outcome yang Diukur
 
-Halaman riwayat transaksi menampilkan seluruh transaksi dalam format daftar kronologis yang bisa difilter berdasarkan rentang tanggal, kategori, akun, dan tipe transaksi (pemasukan, pengeluaran, atau transfer). Pengguna bisa mencari transaksi tertentu menggunakan search bar yang mencari berdasarkan catatan atau nominal transaksi. Setiap item transaksi dalam daftar bisa digeser ke kiri untuk menampilkan opsi hapus dengan konfirmasi, atau di-tap untuk membuka detail dan melakukan edit pada transaksi tersebut. Halaman ini juga menampilkan total pemasukan dan pengeluaran dari transaksi yang sedang ditampilkan sesuai filter yang aktif sehingga pengguna bisa melihat subtotal untuk periode atau kategori tertentu.
+### North Star Metric
+- Persentase hari dalam 30 hari terakhir ketika pengguna melakukan minimal 1 aktivitas finansial bermakna di aplikasi (catat transaksi, update plan, atau review kalender).
 
-Halaman laporan menyediakan visualisasi data keuangan dalam periode yang bisa dipilih pengguna yaitu mingguan, bulanan, atau tahunan. Laporan bulanan menampilkan bar chart yang membandingkan pemasukan dan pengeluaran per minggu dalam bulan tersebut, pie chart breakdown pengeluaran per kategori, dan tren saldo dalam bentuk line chart yang menunjukkan pergerakan saldo dari awal hingga akhir periode. Laporan tahunan menampilkan perbandingan antar bulan sehingga pengguna bisa melihat pola jangka panjang seperti bulan mana yang paling boros atau paling hemat. Semua perhitungan dan rendering grafik dilakukan sepenuhnya secara lokal menggunakan package fl_chart tanpa memerlukan koneksi internet.
+### Outcome Bisnis Produk
+- Meningkatkan konsistensi pencatatan harian.
+- Menurunkan gap antara rencana dan realisasi pengeluaran.
+- Menjaga retensi dengan pengalaman yang ringan dan dapat dipercaya.
 
-Struktur Database Lokal
-Database SQLite terdiri dari lima tabel utama yang dirancang sesederhana mungkin namun cukup fleksibel untuk mendukung seluruh fitur inti. Tabel users menyimpan data akun lokal dengan kolom id sebagai primary key bertipe integer auto-increment, username yang bersifat unique, password_hash yang menyimpan hasil hash bcrypt, security_question dan security_answer_hash untuk fitur recovery password, serta created_at yang mencatat waktu pembuatan akun. Tabel accounts menyimpan daftar dompet atau rekening dengan kolom id, user_id sebagai foreign key ke tabel users, name untuk nama akun, balance yang dihitung dari akumulasi transaksi, icon_name untuk menyimpan referensi ikon yang dipilih pengguna, dan created_at. Tabel categories menyimpan kategori transaksi dengan kolom id, user_id, name, type yang bernilai income atau expense, icon_name, color_hex untuk warna kustom, dan is_default yang menandai apakah kategori ini bawaan sistem atau buatan pengguna.
+### Outcome Pengguna
+- Pengguna lebih cepat tahu posisi kas real-time.
+- Pengguna punya "alarm perilaku" saat pengeluaran mulai keluar jalur.
+- Pengguna punya jejak refleksi untuk membangun kebiasaan finansial yang lebih baik.
 
-Tabel transactions menjadi tabel utama dan paling sering diakses dengan kolom id, user_id, account_id sebagai foreign key ke tabel accounts, category_id sebagai foreign key ke tabel categories, type yang bernilai income, expense, atau transfer, amount yang menyimpan nominal transaksi dalam bentuk integer untuk menghindari masalah floating point pada perhitungan mata uang, date yang menyimpan tanggal transaksi, notes yang bersifat opsional, transfer_to_account_id yang hanya terisi jika tipe transaksi adalah transfer dan merujuk ke akun tujuan, serta created_at dan updated_at untuk keperluan audit. Tabel app_settings menyimpan preferensi pengguna dengan struktur key-value sederhana menggunakan kolom id, user_id, key, dan value yang bisa menampung pengaturan seperti mata uang default, format tanggal, tema aplikasi, dan durasi auto-logout. Seluruh tabel menggunakan integer auto-increment sebagai primary key karena tidak ada kebutuhan sinkronisasi antar perangkat yang memerlukan UUID, dan pendekatan ini lebih efisien untuk SQLite.
+---
 
-Mekanisme Pengecekan Update
-Pengecekan update menggunakan pendekatan yang sangat sederhana dan tidak memerlukan backend server sama sekali. Di repository GitHub proyek ini terdapat sebuah file bernama version.json yang dihosting menggunakan GitHub Pages atau diakses langsung sebagai raw file dari GitHub. File ini berisi tiga informasi yaitu latest_version yang berisi nomor versi terbaru dalam format semantic versioning seperti 1.2.0, update_message yang berisi deskripsi singkat pembaruan dalam satu atau dua kalimat, dan update_url yang berisi link ke halaman Google Play Store atau link download APK langsung. Setiap kali developer merilis versi baru, file version.json ini diupdate sebelum atau bersamaan dengan proses rilis sehingga selalu mencerminkan versi terbaru yang tersedia.
+## 3) Scope Fitur Versi Saat Ini (Reality Check)
 
-Saat aplikasi dibuka, sebuah service bernama UpdateChecker melakukan HTTP GET request ke URL file version.json tersebut. Jika request berhasil, service membandingkan nilai latest_version dari JSON dengan nomor versi aplikasi yang sedang berjalan yang didapat dari package_info_plus. Jika versi di JSON lebih baru, aplikasi menampilkan sebuah banner persisten di bagian atas dashboard dengan warna aksen yang mencolok namun tidak mengganggu, berisi teks update_message dan sebuah tombol "Update" yang ketika ditekan akan membuka update_url menggunakan package url_launcher sehingga pengguna diarahkan ke Play Store atau browser untuk mengunduh versi baru. Banner ini bisa ditutup sementara oleh pengguna dengan menekan tombol dismiss dan akan muncul kembali saat aplikasi dibuka di lain waktu selama versi terbaru belum diinstall. Jika request gagal karena tidak ada koneksi internet atau timeout, tidak ada error yang ditampilkan dan aplikasi berjalan normal seolah pengecekan tidak pernah terjadi. Pengecekan hanya dilakukan satu kali per sesi yaitu saat aplikasi pertama kali dibuka untuk menghindari request berulang yang tidak perlu.
+Implementasi saat ini sudah mencakup fondasi konsep baru:
 
-Struktur Folder Proyek
-Proyek Flutter menggunakan struktur folder feature-first yang mengelompokkan file berdasarkan fitur alih-alih berdasarkan tipe file sehingga semua file yang terkait dengan satu fitur berada dalam satu folder yang sama dan mudah ditemukan. Folder lib/core berisi komponen yang dipakai di seluruh aplikasi termasuk subfolder database yang berisi class DatabaseHelper untuk inisialisasi dan migrasi SQLite, subfolder theme yang berisi definisi warna, tipografi, dan ThemeData, subfolder utils yang berisi helper functions seperti formatter mata uang dan tanggal, dan subfolder widgets yang berisi widget reusable seperti custom text field, tombol, dan card standar. Folder lib/features berisi subfolder untuk setiap fitur utama yaitu auth yang berisi halaman login, registrasi, Cubit untuk state autentikasi, repository, dan model User, dashboard yang berisi halaman utama, Cubit, dan widget-widget dashboard seperti summary card dan chart, transactions yang berisi halaman daftar transaksi, form tambah atau edit, Cubit, repository, dan model Transaction, accounts yang berisi halaman manajemen akun dan dompet beserta Cubit dan repository-nya, categories yang berisi halaman manajemen kategori beserta Cubit dan repository-nya, reports yang berisi halaman laporan dengan berbagai visualisasi chart, settings yang berisi halaman pengaturan aplikasi termasuk ekspor impor data, dan update yang berisi service UpdateChecker dan widget banner update. Folder lib/app berisi file konfigurasi aplikasi termasuk routing, dependency injection, dan MaterialApp wrapper. Dengan struktur ini, menambah fitur baru di masa depan seperti modul freelancer atau gamification hanya memerlukan penambahan folder baru di dalam features tanpa mengubah struktur yang sudah ada.
+- **Autentikasi lokal multi-user** (username/password hash, session lokal).
+- **Pencatatan transaksi**:
+  - tipe income/expense/transfer,
+  - account, category, catatan, bukti gambar,
+  - filter jenis transaksi, metode pembayaran, dan sorting.
+- **Master data**:
+  - dompet/rekening,
+  - kategori income/expense/both.
+- **Plan keuangan**:
+  - saving dan spending item,
+  - target nominal + periode,
+  - status aktif/selesai/batal,
+  - realisasi manual,
+  - auto-track dari transaksi.
+- **Kalender keuangan**:
+  - ringkasan bulanan,
+  - detail harian,
+  - event finansial (payday/reminder/custom).
+- **Backup/restore JSON** untuk seluruh data user.
+- **Cek update aplikasi** via konfigurasi `version.json` (silent fail saat offline).
+- **Owner dashboard (Windows)** untuk operasional sederhana (broadcast dan update config URL).
 
-Pengalaman Pengguna dari Awal hingga Penggunaan Harian
-Saat pertama kali membuka aplikasi setelah install, pengguna langsung disambut oleh halaman registrasi yang sangat sederhana dengan hanya tiga field yaitu username, password, dan konfirmasi password, ditambah satu field opsional untuk security question sebagai mekanisme recovery jika password terlupa. Setelah menekan tombol daftar, akun langsung terbuat secara instan di SQLite lokal tanpa loading atau delay karena tidak ada komunikasi server, dan pengguna langsung diarahkan ke dashboard yang masih kosong dengan sapaan "Halo, [username]" dan ajakan untuk mulai mencatat transaksi pertama. Kategori default dan satu akun Kas sudah otomatis tersedia sehingga pengguna bisa langsung menekan tombol tambah transaksi dan mulai mencatat.
+---
 
-Pada penggunaan harian, pengguna membuka aplikasi dan langsung melihat dashboard dengan saldo terkini, ringkasan bulan ini, dan grafik pengeluaran tanpa delay karena semua data dibaca dari SQLite lokal yang sangat cepat. Jika ada versi baru yang tersedia, banner kecil muncul di atas dashboard dengan pesan singkat dan tombol update yang bisa di-dismiss jika pengguna belum ingin update saat itu. Pencatatan transaksi dilakukan melalui floating action button yang selalu terlihat di layar utama, membuka form sederhana yang bisa diselesaikan dalam beberapa detik, dan setelah disimpan pengguna langsung kembali ke dashboard yang sudah terupdate dengan data terbaru. Navigasi antar fitur menggunakan bottom navigation bar dengan empat tab yaitu Dashboard, Transaksi, Laporan, dan Pengaturan sehingga semua fitur bisa diakses dalam satu tap tanpa menu berlapis.
+## 4) Konsep UX End-to-End (Alur Harian)
 
-Batasan yang Diakui Secara Transparan
-Aplikasi ini secara sadar tidak menyediakan fitur sinkronisasi cloud, backup otomatis, atau akses multi-device di versi awal ini. Jika pengguna menghapus aplikasi, melakukan factory reset, atau berganti perangkat tanpa melakukan ekspor data manual terlebih dahulu, seluruh data keuangan akan hilang secara permanen dan tidak bisa dipulihkan. Aplikasi memberikan peringatan tentang hal ini di halaman pengaturan dan secara berkala mengingatkan pengguna untuk melakukan ekspor data sebagai backup manual. Fitur ekspor menghasilkan file JSON yang berisi seluruh data pengguna termasuk akun, kategori, dan transaksi yang bisa disimpan ke penyimpanan lokal atau dibagikan ke cloud storage pribadi pengguna, dan fitur impor bisa membaca file tersebut untuk mengembalikan data secara lengkap ke perangkat baru.
+### Fase A - Masuk dan orientasi
+- User login cepat.
+- User langsung melihat halaman utama transaksi + ringkasan saldo.
+- Jika ada update, banner tampil non-intrusif.
 
-Tidak ada fitur lupa password berbasis email atau SMS karena tidak ada server yang menyimpan data pengguna. Jika pengguna lupa password dan juga tidak bisa menjawab security question, satu-satunya opsi adalah menghapus akun tersebut dan membuat akun baru yang berarti kehilangan semua data terkait akun tersebut kecuali pengguna memiliki file backup. Batasan ini merupakan trade-off yang sadar dari pendekatan fully offline dan akan diatasi di versi mendatang ketika fitur cloud diperkenalkan sebagai fitur opsional.
+### Fase B - Catat aktivitas keuangan
+- Tombol tambah selalu terlihat.
+- Form fokus ke field penting: nominal, tipe, akun, kategori.
+- Bukti foto/nota opsional untuk transaksi yang butuh audit pribadi.
 
-Rencana Pengembangan Masa Depan
-Versi pertama yang dirilis adalah aplikasi pencatat keuangan offline yang solid dan lengkap dengan fitur pencatatan transaksi, multi-akun, multi-kategori, dashboard, laporan, dan ekspor impor data. Setelah versi pertama stabil dan mendapatkan feedback dari pengguna nyata, pengembangan selanjutnya dilakukan secara bertahap berdasarkan prioritas kebutuhan pengguna. Kemungkinan fitur yang ditambahkan di versi mendatang mencakup budget per kategori yang memungkinkan pengguna menetapkan batas pengeluaran untuk setiap kategori dan mendapat peringatan saat mendekati atau melebihi batas, recurring transaction yang secara otomatis mencatat transaksi berulang seperti tagihan bulanan atau gaji tanpa harus input manual, sinkronisasi cloud opsional yang memungkinkan pengguna yang menginginkan backup online untuk menghubungkan akun mereka ke server, dan modul tambahan seperti pencatatan proyek freelancer atau kalkulator zakat. Namun semua rencana ini bersifat tentatif dan akan disesuaikan berdasarkan data penggunaan nyata dan feedback dari pengguna yang sudah menggunakan versi pertama, karena prinsip utama pengembangan adalah merilis sesuatu yang benar-benar berguna terlebih dahulu baru kemudian menambahkan fitur berdasarkan kebutuhan yang terbukti nyata.
+### Fase C - Kontrol dan koreksi
+- User menyaring transaksi berdasarkan tipe/metode.
+- User melihat pola mingguan dan komposisi pengeluaran kategori.
+- User mengedit/menghapus transaksi yang salah input.
 
-Kesimpulan
-Hmatt versi pertama adalah aplikasi pencatat keuangan offline yang sederhana, cepat, dan langsung berguna tanpa kompleksitas infrastruktur cloud yang belum dibutuhkan. Semua data tersimpan lokal di perangkat menggunakan SQLite, akun dibuat cukup dengan username dan password, dan satu-satunya koneksi internet yang digunakan adalah untuk mengecek apakah ada versi baru aplikasi yang tersedia. Keputusan untuk menyederhanakan konsep secara drastis dari rencana awal diambil berdasarkan prinsip bahwa aplikasi yang sudah jadi dan bisa dipakai hari ini jauh lebih berharga daripada aplikasi sempurna yang tidak pernah selesai dibuat. Dengan scope yang terfokus dan realistis ini, aplikasi bisa dikembangkan dan dirilis dalam waktu yang jauh lebih singkat, divalidasi langsung oleh pengguna nyata, dan dijadikan fondasi yang kokoh untuk pengembangan fitur-fitur ambisius di masa depan ketika kebutuhan dan resource sudah terbukti mendukung.
+### Fase D - Rencana dan evaluasi
+- User membuat plan target (tabungan/pembelian).
+- Realisasi bisa manual atau otomatis dari transaksi terhubung.
+- Evaluasi plan memberi sinyal: under/on/over plan.
+
+### Fase E - Komitmen dan pengingat
+- Kalender jadi pusat pantau tanggal finansial penting.
+- User menambah event gajian/jatuh tempo/ingat bayar.
+- Rutinitas review bulanan dibentuk lewat satu layar yang konsisten.
+
+---
+
+## 5) Arsitektur Konseptual yang Diterapkan
+
+### Pendekatan
+- **Feature-first + clean layering**:
+  - `presentation` (UI/Provider),
+  - `domain` (entity/usecase/repository contract),
+  - `data` (datasource/repository implementation).
+
+### Teknologi inti
+- Flutter + Riverpod.
+- Hive sebagai local persistence utama.
+- GoRouter untuk navigasi.
+
+### Konsep data
+- Semua data utama (auth, transaksi, akun, kategori, plan, event) disimpan lokal.
+- Isolasi data berbasis `userId` agar multi-user dalam satu device tetap aman.
+
+### Konsep keandalan
+- Operasi inti tidak memerlukan internet.
+- Kegagalan jaringan pada update check tidak boleh mengganggu flow utama.
+
+---
+
+## 6) Model Domain Inti (Bahasa Bisnis)
+
+### Auth Domain
+- Entitas sesi lokal: status auth, identifier, userId.
+- Fokus: akses cepat dan privasi lokal.
+
+### Transaction Domain
+- Entitas transaksi memuat:
+  - nilai nominal,
+  - tipe (income/expense/transfer),
+  - metadata (akun, kategori, notes, bukti),
+  - timestamp audit.
+
+### Planning Domain
+- Entitas plan memuat target, periode, status, dan opsi auto-track.
+- Entitas realization memuat aktual, sumber (manual/auto), dan refleksi.
+- Fungsi evaluasi plan menjadi aturan bisnis utama.
+
+### Calendar Domain
+- Entitas event untuk titik kontrol keuangan berbasis tanggal.
+- Menyatukan "apa yang terjadi" (transaksi) dan "apa yang harus terjadi" (event).
+
+---
+
+## 7) Konsep Keamanan dan Privasi
+
+### Sudah diterapkan
+- Password disimpan dalam bentuk hash bcrypt.
+- Data finansial tidak dikirim ke server eksternal secara default.
+
+### Kebijakan produk
+- Hmatt menempatkan pengguna sebagai pemilik penuh data.
+- Backup/restore manual adalah mekanisme anti-kehilangan data utama pada mode offline.
+
+### Catatan risiko yang perlu terus dikomunikasikan
+- Jika aplikasi dihapus tanpa backup, data lokal hilang permanen.
+- Edukasi backup harus tetap ditampilkan jelas di flow pengguna.
+
+---
+
+## 8) Konsep UI/UX Implementasi Saat Ini
+
+Bagian ini diselaraskan dengan dokumen rinci `UI_UX_CONCEPT.md`, agar konsep produk dan konsep antarmuka berada pada narasi yang sama.
+
+### Arah UX
+- Hmatt memakai pola **fast-operational personal finance UX**: masuk cepat, lihat posisi kas, lalu lakukan aksi finansial inti.
+- Prinsip operasional:
+  - action-first (aksi utama selalu terlihat),
+  - low friction (input seperlunya),
+  - contextual guidance (feedback muncul saat relevan),
+  - offline confidence (flow utama tetap jalan tanpa internet).
+
+### Sistem visual yang sudah dipakai
+- Tipografi utama: `DM Sans`.
+- Seed warna brand: teal `#0F766E`.
+- Latar global: `#F3F6FA` (terang, netral, minim kelelahan visual).
+- Gradient aksen penting: teal -> navy (`#0F766E -> #1E3A8A`) pada area hero auth dan header saldo.
+- Warna semantik transaksi:
+  - income (hijau),
+  - expense (merah),
+  - transfer (slate).
+
+### Struktur layout dan posisi elemen
+- **Auth**: hero branding di atas, card form tab masuk/daftar di tengah, CTA utama di bawah.
+- **Home**: update banner -> balance header -> plan summary -> insight -> filter/sort -> list transaksi -> tombol tambah utama di navbar bawah (mobile).
+- **Master**: tab akun/kategori dengan pola CRUD konsisten.
+- **Plan**: filter status, list plan, tambah plan dari tombol tengah navbar (mobile) + dialog auto-track transaksi.
+- **Calendar**: header bulan, ringkasan bulanan, grid kalender, ringkasan hari, event harian, tambah event dari tombol tengah navbar (mobile).
+
+### Struktur navigasi
+- Mobile Android: bottom navigation 5 slot (Home, Akun, Tambah, Plan, Calendar) dengan tombol tambah di tengah sebagai aksi primer lintas halaman, disembunyikan saat keyboard terbuka.
+- Desktop/non-Android: AppBar action + direct routing untuk operasi cepat.
+
+### Identitas copy dan tone
+- Bahasa operasional, singkat, tidak menghakimi.
+- Umpan balik evaluasi plan bersifat membimbing (under/on/over plan).
+- Fokus copy: bantu pengguna mengambil keputusan berikutnya, bukan sekadar menampilkan angka.
+
+---
+
+## 9) Batasan Versi Saat Ini
+
+Konsep ini tetap realistis terhadap implementasi sekarang:
+
+- Belum ada sinkronisasi cloud multi-device.
+- Belum ada notifikasi scheduler lokal lintas platform yang matang.
+- Belum ada budgeting detail per kategori dengan alarm real-time.
+- Belum ada analitik prediktif (cashflow projection otomatis).
+- Home pada layar kecil masih memiliki kepadatan informasi cukup tinggi.
+- Konsistensi bahasa UI belum sepenuhnya satu bahasa.
+- Baseline aksesibilitas formal (tap target, semantic labels, keyboard focus) belum terdokumentasi penuh.
+
+Semua batasan ini adalah kontrol scope agar stabilitas core loop tetap terjaga.
+
+---
+
+## 10) Roadmap Konsep Lanjutan (Produk + UI/UX)
+
+### Prioritas 1 - Reliability dan trust
+- Enkripsi backup opsional dengan passphrase.
+- Validasi impor backup lebih ketat + preview sebelum impor.
+- Pengingat berkala "last backup".
+
+### Prioritas 2 - UX hierarchy dan language consistency
+- Susun ulang hirarki Home untuk menonjolkan saldo + transaksi terbaru lebih dulu.
+- Insight sekunder dibuat lebih adaptif (misalnya dapat dilipat pada layar kecil).
+- Seragamkan bahasa UI menjadi Indonesia penuh.
+- Pertahankan pola tombol tambah di tengah navbar sebagai signature interaction untuk jalur mobile.
+
+### Prioritas 3 - Form ergonomics dan accessibility baseline
+- Sectioning yang lebih jelas pada form Plan (tujuan, nominal/periode, tracking, catatan).
+- Validasi inline untuk error umum sebelum submit.
+- Standar minimum a11y:
+  - tap target >= 44dp,
+  - kontras teks utama minimal setara WCAG AA,
+  - semantic label pada aksi penting,
+  - fokus keyboard jelas untuk desktop.
+
+### Prioritas 4 - Smart planning dan decision support
+- Budget bulanan per kategori.
+- Reminder saat realisasi mendekati batas.
+- Insight dari histori refleksi under-plan.
+- Proyeksi saldo akhir bulan dan simulasi dampak pembelian terhadap plan.
+
+### Prioritas 5 - Optional cloud
+- Sinkronisasi opsional tanpa mengorbankan mode offline sebagai jalur utama.
+
+---
+
+## 11) Definisi Konsep Final
+
+Hmatt adalah **offline financial operating system** untuk individu/keluarga kecil yang ingin mencatat, merencanakan, dan mengevaluasi keuangan secara konsisten, dengan antarmuka yang tenang, cepat, dan berorientasi aksi.
+
+Konsep final menegaskan empat pilar:
+- **Catat** (transactions),
+- **Atur** (master data),
+- **Rencanakan** (financial plans),
+- **Jaga ritme** (calendar + evaluasi + backup).
+
+Dengan penyelarasan ini, arsitektur teknis, pengalaman UI/UX, dan roadmap produk bergerak dalam satu arah: sederhana dipakai, kuat untuk kebiasaan, aman untuk data pengguna.

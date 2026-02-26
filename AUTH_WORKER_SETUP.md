@@ -99,4 +99,4 @@ flutter run --dart-define=AUTH_MODE=worker --dart-define=AUTH_API_BASE_URL=https
 
 - Jangan commit API key ke repo.
 - Simpan key hanya di secret manager (Cloudflare secrets / local private file).
-- Karena key sempat ditulis di `INFO.md`, sebaiknya rotate key Resend setelah setup stabil.
+- Jika key pernah terekspos di repo/chat/log, lakukan rotasi key Resend setelah setup stabil.

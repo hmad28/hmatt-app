@@ -3,6 +3,8 @@ enum TransactionType { income, expense, transfer }
 enum SyncStatus { pending, synced, conflict }
 
 class TransactionItem {
+  static const Object _unset = Object();
+
   const TransactionItem({
     required this.id,
     required this.userId,
@@ -16,6 +18,7 @@ class TransactionItem {
     this.account,
     this.category,
     this.transferToAccount,
+    this.proofImagePath,
   });
 
   final String id;
@@ -30,6 +33,7 @@ class TransactionItem {
   final String? account;
   final String? category;
   final String? transferToAccount;
+  final String? proofImagePath;
 
   TransactionItem copyWith({
     String? id,
@@ -40,10 +44,11 @@ class TransactionItem {
     DateTime? createdAt,
     DateTime? updatedAt,
     SyncStatus? syncStatus,
-    String? notes,
-    String? account,
-    String? category,
-    String? transferToAccount,
+    Object? notes = _unset,
+    Object? account = _unset,
+    Object? category = _unset,
+    Object? transferToAccount = _unset,
+    Object? proofImagePath = _unset,
   }) {
     return TransactionItem(
       id: id ?? this.id,
@@ -54,10 +59,15 @@ class TransactionItem {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
-      notes: notes ?? this.notes,
-      account: account ?? this.account,
-      category: category ?? this.category,
-      transferToAccount: transferToAccount ?? this.transferToAccount,
+      notes: notes == _unset ? this.notes : notes as String?,
+      account: account == _unset ? this.account : account as String?,
+      category: category == _unset ? this.category : category as String?,
+      transferToAccount: transferToAccount == _unset
+          ? this.transferToAccount
+          : transferToAccount as String?,
+      proofImagePath: proofImagePath == _unset
+          ? this.proofImagePath
+          : proofImagePath as String?,
     );
   }
 }

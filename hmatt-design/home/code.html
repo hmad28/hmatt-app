@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hmatt Updated Home Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0f756d",
+                        "primary-dark": "#0a554f",
+                        "secondary": "#1e3a8a", // Navy for gradient
+                        "background-light": "#f3f6fa",
+                        "background-dark": "#112120",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c2b",
+                        "income": "#10b981",
+                        "expense": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .font-variation-settings-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-primary/30">
+<div class="relative w-full bg-gradient-to-br from-primary to-secondary pt-12 pb-8 px-6 rounded-b-[2.5rem] shadow-xl z-10 text-white">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-2 opacity-90">
+<span class="material-symbols-outlined text-sm">cloud_done</span>
+<span class="text-xs font-medium tracking-wide">Synced</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative p-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+</button>
+<button class="relative p-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-400 rounded-full border border-primary"></span>
+</button>
+<div aria-label="User profile picture" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border border-white/30" role="img">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDepv5j4OyGtcVQfQ6e4dyb_ijyL5zSIkb13n2eLnblea2_81qNimwp1rW9O-m2Ovbat_ew1Yqbw9VHcWFgBsN-B-D7Uaa1tVoH-3ncwiq5__uKHJDmYpgYM3opT0KunHTM_mBnKwmoEgNWCsIouCnhnekA4ZkRHKRrnKXUESI8Sio8TrqBRjpytJszyBEf-ISKyQAzLOR0xgtWua1sFX7QV3XoM3FSrRwJ8JAfFjqm5C0_gLLpukwFRbOYYc39Y9AwIANphy2bX0fn"/>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center text-center gap-1">
+<div class="flex items-center gap-2 opacity-80 mb-1">
+<span class="text-sm font-medium tracking-wide">Total Saldo</span>
+<button class="hover:text-white/80 transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+<h1 class="text-4xl font-bold tracking-tight mb-6">Rp 15.450.000</h1>
+<div class="flex w-full gap-3">
+<div class="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 flex flex-col items-start border border-white/10 shadow-sm">
+<div class="flex items-center gap-1 text-emerald-300 text-xs font-medium mb-1">
+<span class="material-symbols-outlined text-[16px] rotate-180">arrow_outward</span>
+                        Income
+                    </div>
+<span class="font-bold text-lg">Rp 25jt</span>
+</div>
+<div class="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 flex flex-col items-start border border-white/10 shadow-sm">
+<div class="flex items-center gap-1 text-red-300 text-xs font-medium mb-1">
+<span class="material-symbols-outlined text-[16px]">arrow_outward</span>
+                        Expense
+                    </div>
+<span class="font-bold text-lg">Rp 9.55jt</span>
+</div>
+</div>
+</div>
+</div>
+<main class="flex-1 overflow-y-auto px-5 pt-6 pb-28 space-y-8">
+<section>
+<div class="flex items-center justify-between mb-3 px-1">
+<h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Active Goal</h2>
+<button class="text-primary text-sm font-semibold">See All</button>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 p-2 rounded-lg text-primary">
+<span class="material-symbols-outlined">savings</span>
+</div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white text-base">Dana Darurat</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400">Emergency Fund</p>
+</div>
+</div>
+<span class="font-bold text-primary text-lg">75%</span>
+</div>
+<div class="space-y-2 relative z-10 mt-4">
+<div class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300">
+<span>Rp 15.000.000</span>
+<span class="text-slate-400">Target: Rp 20jt</span>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 75%"></div>
+</div>
+<p class="text-xs text-slate-400 mt-2">You're on track! Keep it up.</p>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-3 px-1">
+<h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Insights</h2>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-5 px-5">
+<div class="min-w-[160px] bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-36">
+<div class="flex justify-between items-start">
+<div class="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 p-2 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">local_dining</span>
+</div>
+<span class="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">+12%</span>
+</div>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Top Category</p>
+<p class="font-bold text-slate-800 dark:text-slate-100">Food &amp; Drink</p>
+<p class="text-xs font-medium text-slate-400 mt-0.5">Rp 4.2jt</p>
+</div>
+</div>
+<div class="min-w-[160px] bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-36">
+<div class="flex justify-between items-start">
+<div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 p-2 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+</div>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Weekly Trend</p>
+<p class="font-bold text-slate-800 dark:text-slate-100">Avg Daily</p>
+<p class="text-xs font-medium text-slate-400 mt-0.5">Rp 245k</p>
+</div>
+</div>
+<div class="min-w-[160px] bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-36">
+<div class="flex justify-between items-start">
+<div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 p-2 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</div>
+</div>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Safe to Spend</p>
+<p class="font-bold text-slate-800 dark:text-slate-100">Remainder</p>
+<p class="text-xs font-medium text-slate-400 mt-0.5">Rp 2.1jt</p>
+</div>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-4 px-1">
+<h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Recent Activity</h2>
+<button class="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-slate-500">filter_list</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-300">Filter</span>
+</button>
+</div>
+<div class="flex flex-col gap-3">
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">coffee</span>
+</div>
+<div class="flex flex-col">
+<h4 class="font-bold text-slate-800 dark:text-white text-sm">Starbucks Coffee</h4>
+<span class="text-xs text-slate-500 dark:text-slate-400">Food &amp; Drink • Today</span>
+</div>
+</div>
+<span class="font-bold text-expense text-sm">- Rp 55.000</span>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">work</span>
+</div>
+<div class="flex flex-col">
+<h4 class="font-bold text-slate-800 dark:text-white text-sm">Gaji Bulanan</h4>
+<span class="text-xs text-slate-500 dark:text-slate-400">Salary • Yesterday</span>
+</div>
+</div>
+<span class="font-bold text-income text-sm">+ Rp 12.000.000</span>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">shopping_bag</span>
+</div>
+<div class="flex flex-col">
+<h4 class="font-bold text-slate-800 dark:text-white text-sm">Tokopedia Bill</h4>
+<span class="text-xs text-slate-500 dark:text-slate-400">Shopping • 2 days ago</span>
+</div>
+</div>
+<span class="font-bold text-expense text-sm">- Rp 340.000</span>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between opacity-70">
+<div class="flex items-center gap-4">
+<div class="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<div class="flex flex-col">
+<h4 class="font-bold text-slate-800 dark:text-white text-sm">Shell Gas Station</h4>
+<span class="text-xs text-slate-500 dark:text-slate-400">Transport • 3 days ago</span>
+</div>
+</div>
+<span class="font-bold text-expense text-sm">- Rp 450.000</span>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 w-full bg-surface-light dark:bg-surface-dark border-t border-slate-100 dark:border-slate-800 px-6 pb-6 pt-2 z-50">
+<div class="flex justify-between items-center relative">
+<div class="flex gap-8">
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<div class="text-primary dark:text-primary-400 group-hover:bg-primary/5 p-1 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[26px] font-variation-settings-fill">home</span>
+</div>
+<span class="text-[10px] font-bold text-primary dark:text-primary-400">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<div class="text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors p-1 rounded-lg">
+<span class="material-symbols-outlined text-[26px]">list_alt</span>
+</div>
+<span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">Rencana</span>
+</a>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 -top-10">
+<button class="bg-primary hover:bg-primary-dark text-white rounded-2xl w-14 h-14 flex items-center justify-center shadow-lg shadow-primary/40 transition-all active:scale-95 border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+</div>
+<div class="flex gap-8">
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<div class="text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors p-1 rounded-lg">
+<span class="material-symbols-outlined text-[26px]">category</span>
+</div>
+<span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">Categories</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 group" href="#">
+<div class="text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors p-1 rounded-lg">
+<span class="material-symbols-outlined text-[26px]">account_balance_wallet</span>
+</div>
+<span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">Dompet</span>
+</a>
+</div>
+</div>
+</nav>
+
+</body></html>

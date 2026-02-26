@@ -1,22 +1,30 @@
 import 'package:app_2/core/constants/app_spacing.dart';
 import 'package:app_2/core/utils/currency_formatter.dart';
 import 'package:app_2/core/utils/idr_currency_input_formatter.dart';
+import 'package:app_2/core/utils/local_image_preview.dart';
 import 'package:app_2/features/auth/presentation/providers/auth_providers.dart';
 import 'package:app_2/features/finance/domain/entities/finance_account.dart';
 import 'package:app_2/features/finance/domain/entities/finance_category.dart';
+import 'package:app_2/features/finance/domain/entities/financial_plan.dart';
 import 'package:app_2/features/finance/domain/entities/transaction_item.dart';
-import 'package:app_2/features/finance/presentation/providers/backup_provider.dart';
+import 'package:app_2/features/finance/presentation/providers/financial_plan_providers.dart';
 import 'package:app_2/features/finance/presentation/providers/transaction_providers.dart';
 import 'package:app_2/features/finance/presentation/widgets/balance_header.dart';
+import 'package:app_2/features/finance/presentation/widgets/mobile_bottom_nav.dart';
+import 'package:app_2/features/finance/presentation/widgets/payment_mode_badge.dart';
 import 'package:app_2/features/finance/presentation/widgets/transaction_card.dart';
 import 'package:app_2/features/update/presentation/providers/app_update_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 enum TransactionFilter { all, income, expense, transfer }
+
+enum PaymentFilter { all, cash, nonCash }
 
 enum TransactionSort { newest, amountHigh, amountLow }
 
@@ -31,90 +39,71 @@ class TransactionListPage extends ConsumerStatefulWidget {
 class _TransactionListPageState extends ConsumerState<TransactionListPage> {
   var _filter = TransactionFilter.all;
   var _sort = TransactionSort.newest;
+  var _paymentFilter = PaymentFilter.all;
+  var _isBalanceVisible = false;
 
   @override
   Widget build(BuildContext context) {
+    final isAndroidMobile = MobileBottomNav.isEnabledFor(context);
     final asyncTransactions = ref.watch(transactionsControllerProvider);
     final asyncAccounts = ref.watch(accountsControllerProvider);
     final asyncCategories = ref.watch(categoriesControllerProvider);
+    final asyncPlans = ref.watch(financialPlansControllerProvider);
     final updateInfo = ref.watch(appUpdateProvider).valueOrNull;
     final accounts = asyncAccounts.valueOrNull ?? const <FinanceAccount>[];
     final categories = asyncCategories.valueOrNull ?? const <FinanceCategory>[];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FA),
-      appBar: AppBar(
-        title: const Text('Hmatt'),
-        actions: [
-          IconButton(
-            tooltip: 'Keluar',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-              if (context.mounted) {
-                context.go('/');
-              }
-            },
-            icon: const Icon(Icons.logout_rounded),
-          ),
-          IconButton(
-            tooltip: 'Kelola dompet/rekening dan kategori',
-            onPressed: () => context.push('/masters'),
-            icon: const Icon(Icons.tune_rounded),
-          ),
-          PopupMenuButton<_BackupAction>(
-            tooltip: 'Backup data',
-            onSelected: (action) async {
-              switch (action) {
-                case _BackupAction.export:
-                  await _exportBackup(context, ref);
-                  break;
-                case _BackupAction.import:
-                  await _importBackup(context, ref);
-                  break;
-                case _BackupAction.warning:
-                  if (!context.mounted) {
-                    return;
-                  }
-                  await showDialog<void>(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text('Peringatan data lokal'),
-                        content: const Text(
-                          'Data Hmatt disimpan lokal di perangkat ini. '
-                          'Jika aplikasi dihapus atau perangkat berganti tanpa backup, '
-                          'data tidak dapat dipulihkan.',
-                        ),
-                        actions: [
-                          FilledButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Mengerti'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                  break;
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: _BackupAction.export,
-                child: Text('Ekspor backup JSON'),
-              ),
-              PopupMenuItem(
-                value: _BackupAction.import,
-                child: Text('Impor backup JSON'),
-              ),
-              PopupMenuItem(
-                value: _BackupAction.warning,
-                child: Text('Lihat peringatan data'),
-              ),
-            ],
-            icon: const Icon(Icons.backup_rounded),
-          ),
-        ],
-      ),
+      appBar: isAndroidMobile
+          ? null
+          : AppBar(
+              title: const Text('Hmatt'),
+              actions: [
+                IconButton(
+                  tooltip: 'Kelola dompet/rekening dan kategori',
+                  onPressed: () => context.push('/masters'),
+                  icon: const Icon(Icons.tune_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Plan keuangan',
+                  onPressed: () => context.push('/plans'),
+                  icon: const Icon(Icons.savings_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Kalender keuangan',
+                  onPressed: () => context.push('/calendar'),
+                  icon: const Icon(Icons.calendar_month_rounded),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: 'Profil akun',
+                  onSelected: (value) async {
+                    switch (value) {
+                      case 'account':
+                        context.go('/account');
+                        break;
+                      case 'logout':
+                        await ref.read(authControllerProvider.notifier).logout();
+                        if (context.mounted) {
+                          context.go('/');
+                        }
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'account',
+                      child: Text('Profil & Backup'),
+                    ),
+                    PopupMenuItem(
+                      value: 'logout',
+                      child: Text('Logout'),
+                    ),
+                  ],
+                  icon: const Icon(Icons.account_circle_rounded),
+                ),
+              ],
+            ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -124,193 +113,348 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
           ),
         ),
         child: Padding(
-          padding: AppSpacing.p16,
-        child: asyncTransactions.when(
-          data: (items) {
-            final visibleItems = _applyFilterAndSort(items);
-            final totalIncome = items
-                .where((item) => item.type == TransactionType.income)
-                .fold<double>(0, (sum, item) => sum + item.amount);
-            final totalExpense = items
-                .where((item) => item.type == TransactionType.expense)
-                .fold<double>(0, (sum, item) => sum + item.amount);
-            final expenseByCategory = _buildExpenseByCategory(items);
-            final weeklyTrend = _buildWeeklyTrend(items);
-            final hasExpenseData = expenseByCategory.isNotEmpty;
-            final hasWeeklyExpense = weeklyTrend.any((item) => item.amount > 0);
-            final isWide = MediaQuery.sizeOf(context).width >= 900;
+          padding: isAndroidMobile ? EdgeInsets.zero : AppSpacing.p16,
+          child: asyncTransactions.when(
+            data: (items) {
+              final visibleItems = _applyFilterAndSort(items);
+              final totalIncome = items
+                  .where((item) => item.type == TransactionType.income)
+                  .fold<double>(0, (sum, item) => sum + item.amount);
+              final totalExpense = items
+                  .where((item) => item.type == TransactionType.expense)
+                  .fold<double>(0, (sum, item) => sum + item.amount);
+              final expenseByCategory = _buildExpenseByCategory(items);
+              final cashFlowTrend = _buildCashFlowTrend(items);
+              final hasExpenseData = expenseByCategory.isNotEmpty;
+              final hasCashFlow = cashFlowTrend.any(
+                (item) => item.income > 0 || item.expense > 0,
+              );
+              final isWide = MediaQuery.sizeOf(context).width >= 900;
+              if (isAndroidMobile) {
+                final recentItems = visibleItems.take(6).toList();
+                final avgDailyExpense = cashFlowTrend.isEmpty
+                    ? 0.0
+                    : cashFlowTrend.fold<double>(
+                            0,
+                            (sum, point) => sum + point.expense,
+                          ) /
+                          cashFlowTrend.length;
 
-            return ListView(
-              children: [
-                if (updateInfo != null && updateInfo.shouldShowBanner)
-                  _UpdateBanner(
-                    info: updateInfo,
-                    onUpdate: () async {
-                      await ref.read(appUpdateProvider.notifier).openUpdateUrl();
-                    },
-                    onDismiss: () async {
-                      await ref.read(appUpdateProvider.notifier).dismissBanner();
+                return ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _MobileHomeHero(
+                      totalIncome: totalIncome,
+                      totalExpense: totalExpense,
+                      isBalanceVisible: _isBalanceVisible,
+                      onToggleVisibility: () {
+                        setState(() => _isBalanceVisible = !_isBalanceVisible);
+                      },
+                      onCalendarTap: () => context.push('/calendar'),
+                       onProfileTap: () => context.push('/account'),
+                       onLogout: () async {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .logout();
+                        if (context.mounted) {
+                          context.go('/');
+                        }
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 14, 12, 100),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (updateInfo != null &&
+                              updateInfo.shouldShowBanner) ...[
+                            _UpdateBanner(
+                              info: updateInfo,
+                              onUpdate: () async {
+                                await ref
+                                    .read(appUpdateProvider.notifier)
+                                    .openUpdateUrl();
+                              },
+                              onDismiss: () async {
+                                await ref
+                                    .read(appUpdateProvider.notifier)
+                                    .dismissBanner();
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.s12),
+                          ],
+                          _CashFlowTrendCard(data: cashFlowTrend),
+                          const SizedBox(height: AppSpacing.s16),
+                          Text(
+                            'Insights',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: AppSpacing.s8),
+                          SizedBox(
+                            height: 148,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                _MobileInsightCard(
+                                  title: 'Top Category',
+                                  subtitle: expenseByCategory.isEmpty
+                                      ? 'Belum ada'
+                                      : expenseByCategory.first.name,
+                                  value: expenseByCategory.isEmpty
+                                      ? '-'
+                                      : CurrencyFormatter.idr(
+                                          expenseByCategory.first.amount,
+                                        ),
+                                  icon: Icons.local_dining_rounded,
+                                  accent: const Color(0xFFF59E0B),
+                                ),
+                                const SizedBox(width: 10),
+                                _MobileInsightCard(
+                                  title: 'Weekly Trend',
+                                  subtitle: 'Avg Expense Daily',
+                                  value: CurrencyFormatter.idr(avgDailyExpense),
+                                  icon: Icons.trending_up_rounded,
+                                  accent: const Color(0xFF2563EB),
+                                ),
+                                const SizedBox(width: 10),
+                                _MobileInsightCard(
+                                  title: 'Safe to Spend',
+                                  subtitle: 'Remainder',
+                                  value: CurrencyFormatter.idr(
+                                    (totalIncome - totalExpense).clamp(
+                                      0,
+                                      double.infinity,
+                                    ),
+                                  ),
+                                  icon: Icons.account_balance_wallet_rounded,
+                                  accent: const Color(0xFF7C3AED),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.s16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Recent Activity',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: () {
+                                  showModalBottomSheet<void>(
+                                    context: context,
+                                    showDragHandle: true,
+                                    isScrollControlled: true,
+                                    builder: (sheetContext) {
+                                      return Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          16,
+                                          8,
+                                          16,
+                                          16,
+                                        ),
+                                        child: _FilterAndSortBar(
+                                          filter: _filter,
+                                          sort: _sort,
+                                          paymentFilter: _paymentFilter,
+                                          onFilterChanged: (value) {
+                                            setState(() => _filter = value);
+                                          },
+                                          onSortChanged: (value) {
+                                            setState(() => _sort = value);
+                                          },
+                                          onPaymentFilterChanged: (value) {
+                                            setState(
+                                              () => _paymentFilter = value,
+                                            );
+                                          },
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.filter_list_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Filter'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.s8),
+                          if (recentItems.isEmpty)
+                            const _EmptyState()
+                          else
+                            ...recentItems.map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _MobileRecentTransactionTile(
+                                  item: item,
+                                  onEdit: () {
+                                    _showAddTransactionForm(
+                                      context,
+                                      ref,
+                                      initialItem: item,
+                                      accounts: accounts,
+                                      categories: categories,
+                                    );
+                                  },
+                                  onDelete: () {
+                                    _confirmDelete(context, item.id);
+                                  },
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return ListView(
+                children: [
+                  if (updateInfo != null && updateInfo.shouldShowBanner)
+                    _UpdateBanner(
+                      info: updateInfo,
+                      onUpdate: () async {
+                        await ref
+                            .read(appUpdateProvider.notifier)
+                            .openUpdateUrl();
+                      },
+                      onDismiss: () async {
+                        await ref
+                            .read(appUpdateProvider.notifier)
+                            .dismissBanner();
+                      },
+                    ),
+                  if (updateInfo != null && updateInfo.shouldShowBanner)
+                    const SizedBox(height: AppSpacing.s12),
+                  BalanceHeader(
+                    totalIncome: totalIncome,
+                    totalExpense: totalExpense,
+                    isBalanceVisible: _isBalanceVisible,
+                    onToggleVisibility: () {
+                      setState(() => _isBalanceVisible = !_isBalanceVisible);
                     },
                   ),
-                if (updateInfo != null && updateInfo.shouldShowBanner)
+                  const SizedBox(height: AppSpacing.s16),
+                  if (hasExpenseData || hasCashFlow)
+                    if (isWide)
+                      Row(
+                        children: [
+                          if (hasExpenseData)
+                            Expanded(
+                              child: _ExpenseByCategoryCard(
+                                data: expenseByCategory,
+                              ),
+                            ),
+                          if (hasExpenseData && hasCashFlow)
+                            const SizedBox(width: AppSpacing.s12),
+                          if (hasCashFlow)
+                            Expanded(
+                              child: _CashFlowTrendCard(data: cashFlowTrend),
+                            ),
+                        ],
+                      )
+                    else
+                      Column(
+                        children: [
+                          if (hasExpenseData)
+                            _ExpenseByCategoryCard(data: expenseByCategory),
+                          if (hasExpenseData && hasCashFlow)
+                            const SizedBox(height: AppSpacing.s12),
+                          if (hasCashFlow)
+                            _CashFlowTrendCard(data: cashFlowTrend),
+                        ],
+                      ),
+                  if (hasExpenseData || hasCashFlow)
+                    const SizedBox(height: AppSpacing.s16),
+                  _FilterAndSortBar(
+                    filter: _filter,
+                    sort: _sort,
+                    paymentFilter: _paymentFilter,
+                    onFilterChanged: (value) => setState(() => _filter = value),
+                    onSortChanged: (value) => setState(() => _sort = value),
+                    onPaymentFilterChanged: (value) =>
+                        setState(() => _paymentFilter = value),
+                  ),
                   const SizedBox(height: AppSpacing.s12),
-                BalanceHeader(
-                  totalIncome: totalIncome,
-                  totalExpense: totalExpense,
-                ),
-                const SizedBox(height: AppSpacing.s16),
-                if (hasExpenseData || hasWeeklyExpense)
-                  if (isWide)
-                    Row(
-                      children: [
-                        if (hasExpenseData)
-                          Expanded(
-                            child: _ExpenseByCategoryCard(data: expenseByCategory),
-                          ),
-                        if (hasExpenseData && hasWeeklyExpense)
-                          const SizedBox(width: AppSpacing.s12),
-                        if (hasWeeklyExpense)
-                          Expanded(child: _WeeklyTrendCard(data: weeklyTrend)),
-                      ],
+                  if (visibleItems.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: _EmptyState(),
                     )
                   else
-                    Column(
-                      children: [
-                        if (hasExpenseData)
-                          _ExpenseByCategoryCard(data: expenseByCategory),
-                        if (hasExpenseData && hasWeeklyExpense)
-                          const SizedBox(height: AppSpacing.s12),
-                        if (hasWeeklyExpense) _WeeklyTrendCard(data: weeklyTrend),
-                      ],
-                    ),
-                if (hasExpenseData || hasWeeklyExpense)
-                  const SizedBox(height: AppSpacing.s16),
-                _FilterAndSortBar(
-                  filter: _filter,
-                  sort: _sort,
-                  onFilterChanged: (value) => setState(() => _filter = value),
-                  onSortChanged: (value) => setState(() => _sort = value),
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                if (visibleItems.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: _EmptyState(),
-                  )
-                else
-                  ...visibleItems.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index == visibleItems.length - 1
-                            ? 0
-                            : AppSpacing.s12,
-                      ),
-                      child: TransactionCard(
-                        item: item,
-                        onEdit: () {
-                          _showAddTransactionForm(
-                            context,
-                            ref,
-                            initialItem: item,
-                            accounts: accounts,
-                            categories: categories,
-                          );
-                        },
-                        onDelete: () {
-                          _confirmDelete(context, item.id);
-                        },
-                      ),
-                    );
-                  }),
-              ],
-            );
-          },
-          error: (error, stackTrace) =>
-              Center(child: Text('Terjadi error: $error')),
-          loading: () => const Center(child: CircularProgressIndicator()),
+                    ...visibleItems.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      final relatedPlans = _findRelatedPlanTitles(
+                        item,
+                        asyncPlans.valueOrNull ?? const <FinancialPlan>[],
+                      );
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index == visibleItems.length - 1
+                              ? 0
+                              : AppSpacing.s12,
+                        ),
+                        child: TransactionCard(
+                          item: item,
+                          planHints: relatedPlans,
+                          onEdit: () {
+                            _showAddTransactionForm(
+                              context,
+                              ref,
+                              initialItem: item,
+                              accounts: accounts,
+                              categories: categories,
+                            );
+                          },
+                          onDelete: () {
+                            _confirmDelete(context, item.id);
+                          },
+                        ),
+                      );
+                    }),
+                ],
+              );
+            },
+            error: (error, stackTrace) =>
+                Center(child: Text('Terjadi error: $error')),
+            loading: () => const Center(child: CircularProgressIndicator()),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddTransactionForm(
-          context,
-          ref,
-          accounts: accounts,
-          categories: categories,
-        ),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah'),
-      ),
-    );
-  }
-
-  Future<void> _exportBackup(BuildContext context, WidgetRef ref) async {
-    try {
-      final path = await ref
-          .read(backupControllerProvider)
-          .exportCurrentUserData();
-      if (!context.mounted || path == null) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Backup berhasil disimpan: $path')),
-      );
-    } catch (error) {
-      if (!context.mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal ekspor backup: $error')),
-      );
-    }
-  }
-
-  Future<void> _importBackup(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Impor backup'),
-          content: const Text(
-            'Impor akan menimpa seluruh akun, kategori, dan transaksi user yang sedang login. Lanjutkan?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Batal'),
+      floatingActionButton: isAndroidMobile
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _showAddTransactionForm(
+                context,
+                ref,
+                accounts: accounts,
+                categories: categories,
+              ),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Tambah'),
             ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Lanjut impor'),
-            ),
-          ],
-        );
-      },
+      bottomNavigationBar: isAndroidMobile
+          ? MobileBottomNav(
+              selectedIndex: 0,
+              addTooltip: 'Tambah transaksi',
+              onAddPressed: () => _showAddTransactionForm(
+                context,
+                ref,
+                accounts: accounts,
+                categories: categories,
+              ),
+            )
+          : null,
     );
-    if (confirmed != true) {
-      return;
-    }
-
-    try {
-      final path = await ref
-          .read(backupControllerProvider)
-          .importCurrentUserData();
-      if (!context.mounted || path == null) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Backup berhasil diimpor dari: $path')),
-      );
-    } catch (error) {
-      if (!context.mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal impor backup: $error')),
-      );
-    }
   }
 
   List<TransactionItem> _applyFilterAndSort(List<TransactionItem> items) {
@@ -324,7 +468,15 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
         items.where((item) => item.type == TransactionType.transfer).toList(),
     };
 
-    final sorted = [...filtered];
+    final paymentFiltered = switch (_paymentFilter) {
+      PaymentFilter.all => filtered,
+      PaymentFilter.cash =>
+        filtered.where((item) => !_isNonCashTransaction(item)).toList(),
+      PaymentFilter.nonCash =>
+        filtered.where((item) => _isNonCashTransaction(item)).toList(),
+    };
+
+    final sorted = [...paymentFiltered];
     switch (_sort) {
       case TransactionSort.newest:
         sorted.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -334,6 +486,66 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
         sorted.sort((a, b) => a.amount.compareTo(b.amount));
     }
     return sorted;
+  }
+
+  bool _isNonCashTransaction(TransactionItem item) {
+    if (item.type == TransactionType.transfer) {
+      return true;
+    }
+    final account = item.account;
+    if (account == null || account.trim().isEmpty) {
+      return false;
+    }
+    final lower = account.toLowerCase();
+    return !(lower.contains('cash') || lower.contains('kas'));
+  }
+
+  List<String> _findRelatedPlanTitles(
+    TransactionItem item,
+    List<FinancialPlan> plans,
+  ) {
+    final related = <String>[];
+    for (final plan in plans) {
+      if (!plan.autoTrackFromTransactions) {
+        continue;
+      }
+      if (item.createdAt.isBefore(_startOfDay(plan.startDate)) ||
+          item.createdAt.isAfter(_endOfDay(plan.endDate))) {
+        continue;
+      }
+      final linkedCategory = plan.linkedCategory?.toLowerCase();
+      if (linkedCategory != null && linkedCategory.isNotEmpty) {
+        final itemCategory = item.category?.toLowerCase();
+        if (itemCategory != linkedCategory) {
+          continue;
+        }
+      }
+      final linkedAccount = plan.linkedAccount?.toLowerCase();
+      if (linkedAccount != null && linkedAccount.isNotEmpty) {
+        final itemAccount = item.account?.toLowerCase();
+        if (itemAccount != linkedAccount) {
+          continue;
+        }
+      }
+      if (plan.type == FinancialPlanType.saving &&
+          item.type != TransactionType.income) {
+        continue;
+      }
+      if (plan.type == FinancialPlanType.spendingItem &&
+          item.type != TransactionType.expense) {
+        continue;
+      }
+      related.add(plan.title);
+    }
+    return related;
+  }
+
+  DateTime _startOfDay(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
+
+  DateTime _endOfDay(DateTime value) {
+    return DateTime(value.year, value.month, value.day, 23, 59, 59, 999);
   }
 
   Future<void> _confirmDelete(BuildContext context, String id) async {
@@ -369,13 +581,11 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
 
   Future<void> _showAddTransactionForm(
     BuildContext context,
-    WidgetRef ref,
-    {
+    WidgetRef ref, {
     TransactionItem? initialItem,
     required List<FinanceAccount> accounts,
     required List<FinanceCategory> categories,
-  }
-  ) async {
+  }) async {
     final form = _AddTransactionForm(
       initialItem: initialItem,
       accounts: accounts,
@@ -389,6 +599,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
             account,
             category,
             transferToAccount,
+            proofImagePath,
           }) async {
             if (initialItem == null) {
               await ref
@@ -401,6 +612,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                     account: account,
                     category: category,
                     transferToAccount: transferToAccount,
+                    proofImagePath: proofImagePath,
                   );
             } else {
               await ref
@@ -414,6 +626,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                       account: account,
                       category: category,
                       transferToAccount: transferToAccount,
+                      proofImagePath: proofImagePath,
                     ),
                   );
             }
@@ -474,7 +687,11 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
       final key = (item.category == null || item.category!.trim().isEmpty)
           ? 'Tanpa kategori'
           : item.category!.trim();
-      grouped.update(key, (value) => value + item.amount, ifAbsent: () => item.amount);
+      grouped.update(
+        key,
+        (value) => value + item.amount,
+        ifAbsent: () => item.amount,
+      );
     }
 
     final result = grouped.entries
@@ -484,45 +701,49 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
     return result.take(5).toList();
   }
 
-  List<_DailyExpensePoint> _buildWeeklyTrend(List<TransactionItem> items) {
+  List<_DailyCashFlowPoint> _buildCashFlowTrend(List<TransactionItem> items) {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 6));
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 6));
 
-    final totals = <DateTime, double>{};
+    final totals = <DateTime, _DailyCashFlowPoint>{};
     for (var i = 0; i < 7; i++) {
       final day = DateTime(start.year, start.month, start.day + i);
-      totals[day] = 0;
+      totals[day] = _DailyCashFlowPoint(label: '', income: 0, expense: 0);
     }
 
     for (final item in items) {
-      if (item.type != TransactionType.expense) {
-        continue;
-      }
       final day = DateTime(
         item.createdAt.year,
         item.createdAt.month,
         item.createdAt.day,
       );
       if (totals.containsKey(day)) {
-        totals.update(day, (value) => value + item.amount);
+        final current = totals[day]!;
+        if (item.type == TransactionType.income) {
+          totals[day] = current.copyWith(income: current.income + item.amount);
+        } else if (item.type == TransactionType.expense) {
+          totals[day] = current.copyWith(expense: current.expense + item.amount);
+        }
       }
     }
 
     const labels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     final points = totals.entries
         .map(
-          (entry) => _DailyExpensePoint(
+          (entry) => _DailyCashFlowPoint(
             label: labels[entry.key.weekday - 1],
-            amount: entry.value,
+            income: entry.value.income,
+            expense: entry.value.expense,
           ),
         )
         .toList();
     return points;
   }
 }
-
-enum _BackupAction { export, import, warning }
 
 class _CategoryTotal {
   const _CategoryTotal({required this.name, required this.amount});
@@ -531,11 +752,28 @@ class _CategoryTotal {
   final double amount;
 }
 
-class _DailyExpensePoint {
-  const _DailyExpensePoint({required this.label, required this.amount});
+class _DailyCashFlowPoint {
+  const _DailyCashFlowPoint({
+    required this.label,
+    required this.income,
+    required this.expense,
+  });
 
   final String label;
-  final double amount;
+  final double income;
+  final double expense;
+
+  _DailyCashFlowPoint copyWith({
+    String? label,
+    double? income,
+    double? expense,
+  }) {
+    return _DailyCashFlowPoint(
+      label: label ?? this.label,
+      income: income ?? this.income,
+      expense: expense ?? this.expense,
+    );
+  }
 }
 
 class _ExpenseByCategoryCard extends StatelessWidget {
@@ -547,9 +785,7 @@ class _ExpenseByCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxValue = data.isEmpty
         ? 1.0
-        : data
-              .map((item) => item.amount)
-              .reduce((a, b) => a > b ? a : b);
+        : data.map((item) => item.amount).reduce((a, b) => a > b ? a : b);
 
     return Card(
       child: Padding(
@@ -639,10 +875,7 @@ class _UpdateBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          FilledButton(
-            onPressed: onUpdate,
-            child: const Text('Update'),
-          ),
+          FilledButton(onPressed: onUpdate, child: const Text('Update')),
           IconButton(
             tooltip: 'Sembunyikan',
             onPressed: onDismiss,
@@ -654,17 +887,17 @@ class _UpdateBanner extends StatelessWidget {
   }
 }
 
-class _WeeklyTrendCard extends StatelessWidget {
-  const _WeeklyTrendCard({required this.data});
+class _CashFlowTrendCard extends StatelessWidget {
+  const _CashFlowTrendCard({required this.data});
 
-  final List<_DailyExpensePoint> data;
+  final List<_DailyCashFlowPoint> data;
 
   @override
   Widget build(BuildContext context) {
     final maxValue = data.isEmpty
         ? 1.0
         : data
-              .map((item) => item.amount)
+              .map((item) => item.income > item.expense ? item.income : item.expense)
               .reduce((a, b) => a > b ? a : b);
 
     return Card(
@@ -674,12 +907,12 @@ class _WeeklyTrendCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tren pengeluaran 7 hari',
+              'Tren pemasukan vs pengeluaran (7 hari)',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: AppSpacing.s12),
             SizedBox(
-              height: 140,
+              height: 160,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: data
@@ -693,19 +926,34 @@ class _WeeklyTrendCard extends StatelessWidget {
                               Expanded(
                                 child: Align(
                                   alignment: Alignment.bottomCenter,
-                                  child: Container(
-                                    width: 16,
-                                    height: maxValue == 0
-                                        ? 2
-                                        : ((item.amount / maxValue) * 100)
-                                              .clamp(2, 100),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.8),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Container(
+                                        width: 10,
+                                        height: maxValue == 0
+                                            ? 2
+                                            : ((item.income / maxValue) * 100)
+                                                  .clamp(2, 100),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF16A34A),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Container(
+                                        width: 10,
+                                        height: maxValue == 0
+                                            ? 2
+                                            : ((item.expense / maxValue) * 100)
+                                                  .clamp(2, 100),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFDC2626),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -722,9 +970,40 @@ class _WeeklyTrendCard extends StatelessWidget {
                     .toList(),
               ),
             ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _LegendDot(color: Color(0xFF16A34A), label: 'Pemasukan'),
+                const SizedBox(width: 10),
+                _LegendDot(color: Color(0xFFDC2626), label: 'Pengeluaran'),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
     );
   }
 }
@@ -749,6 +1028,7 @@ class _AddTransactionForm extends StatefulWidget {
     String? account,
     String? category,
     String? transferToAccount,
+    String? proofImagePath,
   })
   onSubmit;
 
@@ -765,6 +1045,7 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
   String? _selectedAccount;
   String? _selectedCategory;
   String? _selectedTransferToAccount;
+  String? _proofImagePath;
   var _isSubmitting = false;
 
   @override
@@ -777,11 +1058,43 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
         item.amount.round(),
       );
       _notesController.text = item.notes ?? '';
-      _selectedAccount = item.account;
+      _selectedAccount = item.account ?? _defaultCashAccountOrFallback();
       _selectedCategory = item.category;
       _selectedTransferToAccount = item.transferToAccount;
+      _proofImagePath = item.proofImagePath;
       _type = item.type;
+    } else {
+      _selectedAccount = _defaultCashAccountOrFallback();
+      _proofImagePath = null;
     }
+  }
+
+  String? _defaultCashAccountOrFallback() {
+    String? cash;
+    for (final item in widget.accounts) {
+      final lower = item.name.toLowerCase();
+      if (lower.contains('cash') || lower.contains('kas')) {
+        cash = item.name;
+        break;
+      }
+    }
+    if (cash != null) {
+      return cash;
+    }
+    if (widget.accounts.isNotEmpty) {
+      return widget.accounts.first.name;
+    }
+    return null;
+  }
+
+  bool get _requiresProof {
+    return _type == TransactionType.transfer;
+  }
+
+  bool get _canAttachProof {
+    return _type == TransactionType.expense ||
+        _type == TransactionType.income ||
+        _type == TransactionType.transfer;
   }
 
   List<FinanceCategory> get _availableCategories {
@@ -835,6 +1148,7 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
               onSelectionChanged: (value) {
                 setState(() {
                   _type = value.first;
+                  _selectedAccount ??= _defaultCashAccountOrFallback();
                   final allowedNames = _availableCategories
                       .map((item) => item.name)
                       .toSet();
@@ -872,7 +1186,9 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
                 IdrCurrencyInputFormatter(),
               ],
               validator: (value) {
-                final parsed = IdrCurrencyInputFormatter.parseToInt(value ?? '');
+                final parsed = IdrCurrencyInputFormatter.parseToInt(
+                  value ?? '',
+                );
                 if (parsed <= 0) {
                   return 'Jumlah harus lebih dari 0';
                 }
@@ -882,16 +1198,9 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
             const SizedBox(height: AppSpacing.s12),
             DropdownButtonFormField<String?>(
               initialValue: _selectedAccount,
-              decoration: const InputDecoration(
-                labelText: 'Dompet/Rekening',
-              ),
+              decoration: const InputDecoration(labelText: 'Dompet/Rekening'),
               hint: const Text('Pilih dompet/rekening'),
               items: [
-                if (_type != TransactionType.transfer)
-                  const DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('Tanpa dompet/rekening'),
-                  ),
                 ...widget.accounts.map(
                   (item) => DropdownMenuItem<String?>(
                     value: item.name,
@@ -901,6 +1210,21 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
               ],
               onChanged: (value) => setState(() => _selectedAccount = value),
             ),
+            if (_selectedAccount != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Akun terpilih: ${_selectedAccount!}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    PaymentModeBadge(isNonCash: _requiresProof),
+                  ],
+                ),
+              ),
             if (_type == TransactionType.transfer) ...[
               const SizedBox(height: AppSpacing.s12),
               DropdownButtonFormField<String?>(
@@ -924,9 +1248,10 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
             ] else ...[
               const SizedBox(height: AppSpacing.s12),
               DropdownButtonFormField<String?>(
-                initialValue: _availableCategories.any(
-                  (item) => item.name == _selectedCategory,
-                )
+                initialValue:
+                    _availableCategories.any(
+                      (item) => item.name == _selectedCategory,
+                    )
                     ? _selectedCategory
                     : null,
                 decoration: const InputDecoration(
@@ -951,10 +1276,81 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
             const SizedBox(height: 4),
             Text(
               _type == TransactionType.transfer
-                  ? 'Pilih dompet asal dan tujuan transfer.'
-                  : 'Kelola dompet/rekening dan kategori dari tombol pengaturan di AppBar.',
+                  ? 'Pilih dompet asal dan tujuan transfer. Bukti gambar wajib dilampirkan.'
+                  : 'Bukti gambar pengeluaran/pemasukan bersifat opsional, tetapi disarankan untuk arsip.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (_canAttachProof) ...[
+              const SizedBox(height: AppSpacing.s12),
+              if (_proofImagePath != null) ...[
+                GestureDetector(
+                  onTap: () => showLocalImageViewer(
+                    context,
+                    path: _proofImagePath!,
+                    title: 'Preview bukti transaksi',
+                  ),
+                  child: buildLocalImageThumbnail(
+                    path: _proofImagePath!,
+                    width: 96,
+                    height: 96,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              OutlinedButton.icon(
+                onPressed: _pickProofImage,
+                icon: const Icon(Icons.image_outlined),
+                label: Text(
+                  _proofImagePath == null
+                      ? 'Pilih gambar bukti (non-cash)'
+                      : 'Ganti gambar bukti',
+                ),
+              ),
+              if (_proofImagePath != null)
+                TextButton.icon(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Hapus bukti gambar'),
+                          content: const Text(
+                            'Bukti transaksi akan dihapus dari input ini. Lanjutkan?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Batal'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    if (confirmed == true && mounted) {
+                      setState(() => _proofImagePath = null);
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Bukti transaksi dihapus dari input'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Hapus bukti'),
+                ),
+              if (_proofImagePath != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'File bukti: ${_proofImagePath!.split('\\').last}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ],
             const SizedBox(height: AppSpacing.s12),
             TextFormField(
               controller: _notesController,
@@ -991,9 +1387,7 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
     if (_type == TransactionType.transfer) {
       if (_selectedAccount == null || _selectedTransferToAccount == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Transfer butuh akun asal dan tujuan'),
-          ),
+          const SnackBar(content: Text('Transfer butuh akun asal dan tujuan')),
         );
         return;
       }
@@ -1005,6 +1399,23 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
         );
         return;
       }
+    }
+
+    if (_selectedAccount == null || _selectedAccount!.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih dompet/rekening terlebih dahulu')),
+      );
+      return;
+    }
+
+    if (_requiresProof &&
+        (_proofImagePath == null || _proofImagePath!.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaksi non-cash wajib lampirkan bukti gambar'),
+        ),
+      );
+      return;
     }
 
     setState(() => _isSubmitting = true);
@@ -1023,11 +1434,33 @@ class _AddTransactionFormState extends State<_AddTransactionForm> {
         transferToAccount: _type == TransactionType.transfer
             ? _selectedTransferToAccount
             : null,
+        proofImagePath: _proofImagePath,
       );
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
+    }
+  }
+
+  Future<void> _pickProofImage() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: false,
+    );
+    if (picked == null || picked.files.isEmpty) {
+      return;
+    }
+    final path = picked.files.single.path;
+    if (path == null || path.trim().isEmpty) {
+      return;
+    }
+    setState(() => _proofImagePath = path);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bukti dipilih: ${path.split('\\').last}')),
+      );
     }
   }
 }
@@ -1036,14 +1469,18 @@ class _FilterAndSortBar extends StatelessWidget {
   const _FilterAndSortBar({
     required this.filter,
     required this.sort,
+    required this.paymentFilter,
     required this.onFilterChanged,
     required this.onSortChanged,
+    required this.onPaymentFilterChanged,
   });
 
   final TransactionFilter filter;
   final TransactionSort sort;
+  final PaymentFilter paymentFilter;
   final ValueChanged<TransactionFilter> onFilterChanged;
   final ValueChanged<TransactionSort> onSortChanged;
+  final ValueChanged<PaymentFilter> onPaymentFilterChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1058,10 +1495,7 @@ class _FilterAndSortBar extends StatelessWidget {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Filter',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+                Text('Filter', style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -1086,6 +1520,34 @@ class _FilterAndSortBar extends StatelessWidget {
                       label: 'Transfer',
                       selected: filter == TransactionFilter.transfer,
                       onTap: () => onFilterChanged(TransactionFilter.transfer),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Mode pembayaran',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _FilterChip(
+                      label: 'Semua mode',
+                      selected: paymentFilter == PaymentFilter.all,
+                      onTap: () => onPaymentFilterChanged(PaymentFilter.all),
+                    ),
+                    _FilterChip(
+                      label: 'Tunai',
+                      selected: paymentFilter == PaymentFilter.cash,
+                      onTap: () => onPaymentFilterChanged(PaymentFilter.cash),
+                    ),
+                    _FilterChip(
+                      label: 'Non-tunai',
+                      selected: paymentFilter == PaymentFilter.nonCash,
+                      onTap: () =>
+                          onPaymentFilterChanged(PaymentFilter.nonCash),
                     ),
                   ],
                 ),
@@ -1125,27 +1587,53 @@ class _FilterAndSortBar extends StatelessWidget {
           : Row(
               children: [
                 Expanded(
-                  child: SegmentedButton<TransactionFilter>(
-                    segments: const [
-                      ButtonSegment(
-                        value: TransactionFilter.all,
-                        label: Text('Semua'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SegmentedButton<TransactionFilter>(
+                        segments: const [
+                          ButtonSegment(
+                            value: TransactionFilter.all,
+                            label: Text('Semua'),
+                          ),
+                          ButtonSegment(
+                            value: TransactionFilter.income,
+                            label: Text('Pemasukan'),
+                          ),
+                          ButtonSegment(
+                            value: TransactionFilter.expense,
+                            label: Text('Pengeluaran'),
+                          ),
+                          ButtonSegment(
+                            value: TransactionFilter.transfer,
+                            label: Text('Transfer'),
+                          ),
+                        ],
+                        selected: {filter},
+                        onSelectionChanged: (value) =>
+                            onFilterChanged(value.first),
                       ),
-                      ButtonSegment(
-                        value: TransactionFilter.income,
-                        label: Text('Pemasukan'),
-                      ),
-                      ButtonSegment(
-                        value: TransactionFilter.expense,
-                        label: Text('Pengeluaran'),
-                      ),
-                      ButtonSegment(
-                        value: TransactionFilter.transfer,
-                        label: Text('Transfer'),
+                      const SizedBox(height: 8),
+                      SegmentedButton<PaymentFilter>(
+                        segments: const [
+                          ButtonSegment(
+                            value: PaymentFilter.all,
+                            label: Text('Semua mode'),
+                          ),
+                          ButtonSegment(
+                            value: PaymentFilter.cash,
+                            label: Text('Tunai'),
+                          ),
+                          ButtonSegment(
+                            value: PaymentFilter.nonCash,
+                            label: Text('Non-tunai'),
+                          ),
+                        ],
+                        selected: {paymentFilter},
+                        onSelectionChanged: (value) =>
+                            onPaymentFilterChanged(value.first),
                       ),
                     ],
-                    selected: {filter},
-                    onSelectionChanged: (value) => onFilterChanged(value.first),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s12),
@@ -1214,6 +1702,392 @@ class _FilterChip extends StatelessWidget {
             color: selected ? Colors.white : const Color(0xFF334155),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MobileHomeHero extends StatelessWidget {
+  const _MobileHomeHero({
+    required this.totalIncome,
+    required this.totalExpense,
+    required this.isBalanceVisible,
+    required this.onToggleVisibility,
+    required this.onCalendarTap,
+    required this.onProfileTap,
+    required this.onLogout,
+  });
+
+  final double totalIncome;
+  final double totalExpense;
+  final bool isBalanceVisible;
+  final VoidCallback onToggleVisibility;
+  final VoidCallback onCalendarTap;
+  final VoidCallback onProfileTap;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    final net = totalIncome - totalExpense;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 46, 12, 18),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0F756D), Color(0xFF1E3A8A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.cloud_done_rounded,
+                color: Colors.white70,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Synced',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: onCalendarTap,
+                icon: const Icon(Icons.calendar_today_rounded),
+                color: Colors.white,
+                visualDensity: VisualDensity.compact,
+              ),
+              IconButton(
+                tooltip: 'Profil akun',
+                onPressed: onProfileTap,
+                icon: const Icon(Icons.account_circle_rounded),
+                color: Colors.white,
+                visualDensity: VisualDensity.compact,
+              ),
+              IconButton(
+                tooltip: 'Keluar',
+                onPressed: onLogout,
+                icon: const Icon(Icons.logout_rounded),
+                color: Colors.white,
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Total Saldo',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              IconButton(
+                onPressed: onToggleVisibility,
+                icon: Icon(
+                  isBalanceVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+                color: Colors.white,
+                iconSize: 18,
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+          Text(
+            isBalanceVisible ? CurrencyFormatter.idr(net) : '***',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _HeroStatCard(
+                  label: 'Income',
+                  value: isBalanceVisible
+                      ? CurrencyFormatter.idr(totalIncome)
+                      : '***',
+                  color: const Color(0xFFB6F5D8),
+                  icon: Icons.arrow_outward_rounded,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _HeroStatCard(
+                  label: 'Expense',
+                  value: isBalanceVisible
+                      ? CurrencyFormatter.idr(totalExpense)
+                      : '***',
+                  color: const Color(0xFFFECACA),
+                  icon: Icons.arrow_outward_rounded,
+                  rotateIcon: true,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroStatCard extends StatelessWidget {
+  const _HeroStatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+    this.rotateIcon = false,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+  final bool rotateIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Transform.rotate(
+                angle: rotateIcon ? 3.14159 : 0,
+                child: Icon(icon, color: color, size: 14),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileInsightCard extends StatelessWidget {
+  const _MobileInsightCard({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.icon,
+    required this.accent,
+  });
+
+  final String title;
+  final String subtitle;
+  final String value;
+  final IconData icon;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 164,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE6EDF5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: accent, size: 18),
+          ),
+          const Spacer(),
+          Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          Text(value, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileRecentTransactionTile extends StatelessWidget {
+  const _MobileRecentTransactionTile({
+    required this.item,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final TransactionItem item;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final isIncome = item.type == TransactionType.income;
+    final isTransfer = item.type == TransactionType.transfer;
+    final amountColor = isTransfer
+        ? const Color(0xFF334155)
+        : isIncome
+        ? const Color(0xFF10B981)
+        : const Color(0xFFEF4444);
+    final amountPrefix = isTransfer
+        ? ''
+        : isIncome
+        ? '+ '
+        : '- ';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE6EDF5)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: amountColor.withValues(alpha: 0.12),
+            child: Icon(
+              isTransfer
+                  ? Icons.swap_horiz_rounded
+                  : isIncome
+                  ? Icons.arrow_downward_rounded
+                  : Icons.arrow_upward_rounded,
+              color: amountColor,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  item.type == TransactionType.transfer
+                      ? '${item.account ?? 'Tanpa akun'} • ${item.transferToAccount ?? 'Tanpa akun tujuan'} • ${DateFormat('dd MMM', 'id_ID').format(item.createdAt)}'
+                      : '${item.category ?? 'Tanpa kategori'} • ${DateFormat('dd MMM', 'id_ID').format(item.createdAt)}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (item.proofImagePath != null && item.proofImagePath!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: InkWell(
+                      onTap: () => showLocalImageViewer(
+                        context,
+                        path: item.proofImagePath!,
+                        title: 'Bukti transaksi',
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          buildLocalImageThumbnail(
+                            path: item.proofImagePath!,
+                            width: 36,
+                            height: 36,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Lihat bukti',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF0F766E),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$amountPrefix${CurrencyFormatter.idr(item.amount)}',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: amountColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: onEdit,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.edit_outlined, size: 16),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: onDelete,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.delete_outline_rounded, size: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

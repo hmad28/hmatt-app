@@ -14,6 +14,7 @@ class TransactionItemModel {
     this.account,
     this.category,
     this.transferToAccount,
+    this.proofImagePath,
   });
 
   final String id;
@@ -28,6 +29,7 @@ class TransactionItemModel {
   final String? account;
   final String? category;
   final String? transferToAccount;
+  final String? proofImagePath;
 
   factory TransactionItemModel.fromEntity(TransactionItem entity) {
     return TransactionItemModel(
@@ -43,6 +45,7 @@ class TransactionItemModel {
       account: entity.account,
       category: entity.category,
       transferToAccount: entity.transferToAccount,
+      proofImagePath: entity.proofImagePath,
     );
   }
 
@@ -67,6 +70,7 @@ class TransactionItemModel {
       account: account,
       category: category,
       transferToAccount: transferToAccount,
+      proofImagePath: proofImagePath,
     );
   }
 
@@ -84,6 +88,7 @@ class TransactionItemModel {
       'account': account,
       'category': category,
       'transferToAccount': transferToAccount,
+      'proofImagePath': proofImagePath,
     };
   }
 
@@ -101,6 +106,7 @@ class TransactionItemModel {
       account: json['account'] as String?,
       category: json['category'] as String?,
       transferToAccount: json['transferToAccount'] as String?,
+      proofImagePath: json['proofImagePath'] as String?,
     );
   }
 }

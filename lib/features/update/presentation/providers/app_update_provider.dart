@@ -104,7 +104,7 @@ class AppUpdateController extends AsyncNotifier<UpdateInfo> {
       return;
     }
 
-    final uri = Uri.tryParse(rawUrl.trim());
+    final uri = _validatedUri(rawUrl.trim());
     if (uri == null) {
       return;
     }
@@ -211,7 +211,7 @@ class AppUpdateController extends AsyncNotifier<UpdateInfo> {
       return null;
     }
 
-    final uri = Uri.tryParse(url);
+    final uri = _validatedUri(url);
     if (uri == null) {
       return null;
     }
@@ -231,6 +231,11 @@ class AppUpdateController extends AsyncNotifier<UpdateInfo> {
       final updateUrl = (decoded['update_url'] as String?)?.trim();
       if (latestVersion == null || latestVersion.isEmpty) {
         return null;
+      }
+      if (updateUrl != null && updateUrl.isNotEmpty) {
+        if (_validatedUri(updateUrl) == null) {
+          return null;
+        }
       }
 
       final currentVersion = await _readCurrentAppVersion();
@@ -264,7 +269,47 @@ class AppUpdateController extends AsyncNotifier<UpdateInfo> {
         selected.contains('your-github-username')) {
       return null;
     }
-    return selected;
+    final validated = _validatedUri(selected);
+    if (validated == null) {
+      return null;
+    }
+    return validated.toString();
+  }
+
+  Uri? _validatedUri(String raw) {
+    final uri = Uri.tryParse(raw);
+    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+      return null;
+    }
+    if (uri.scheme.toLowerCase() != 'https') {
+      return null;
+    }
+
+    final host = uri.host.toLowerCase();
+    if (host.isEmpty) {
+      return null;
+    }
+
+    final allowlist = _trustedHosts();
+    if (allowlist.isEmpty) {
+      return uri;
+    }
+    final isAllowed = allowlist.any(
+      (trusted) => host == trusted || host.endsWith('.$trusted'),
+    );
+    return isAllowed ? uri : null;
+  }
+
+  Set<String> _trustedHosts() {
+    final raw = AppEnv.updateTrustedHosts.trim();
+    if (raw.isEmpty) {
+      return const <String>{};
+    }
+    return raw
+        .split(',')
+        .map((part) => part.trim().toLowerCase())
+        .where((part) => part.isNotEmpty)
+        .toSet();
   }
 
   Future<String> _readCurrentAppVersion() async {

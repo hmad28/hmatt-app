@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Account Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0f756d",
+                        "primary-dark": "#0a554f",
+                        "secondary": "#1e3a8a",
+                        "background-light": "#f3f6fa",
+                        "background-dark": "#112120",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c2b",
+                        "income": "#10b981",
+                        "expense": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }.toggle-checkbox:checked {
+            right: 0;
+            border-color: #0f756d;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #0f756d;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-primary/30">
+<header class="sticky top-0 z-30 bg-background-light dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-5 py-4">
+<div class="flex items-center justify-between">
+<button class="p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold text-slate-800 dark:text-white">Account Settings</h1>
+<div class="w-10"></div> 
+</div>
+</header>
+<main class="flex-1 px-5 py-6 space-y-6 max-w-lg mx-auto w-full">
+<section class="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center relative overflow-hidden">
+<div class="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none"></div>
+<div class="relative w-24 h-24 mb-4">
+<div class="w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-surface-dark shadow-md">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDepv5j4OyGtcVQfQ6e4dyb_ijyL5zSIkb13n2eLnblea2_81qNimwp1rW9O-m2Ovbat_ew1Yqbw9VHcWFgBsN-B-D7Uaa1tVoH-3ncwiq5__uKHJDmYpgYM3opT0KunHTM_mBnKwmoEgNWCsIouCnhnekA4ZkRHKRrnKXUESI8Sio8TrqBRjpytJszyBEf-ISKyQAzLOR0xgtWua1sFX7QV3XoM3FSrRwJ8JAfFjqm5C0_gLLpukwFRbOYYc39Y9AwIANphy2bX0fn"/>
+</div>
+<button class="absolute bottom-0 right-0 bg-primary hover:bg-primary-dark text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-surface-dark transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</div>
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">Alex Johnson</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm mb-4">alex.johnson@example.com</p>
+<div class="flex gap-3 w-full">
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800/50">
+<span class="block text-xs text-slate-400 mb-1">Member Since</span>
+<span class="block font-semibold text-slate-700 dark:text-slate-200">Sep 2023</span>
+</div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800/50">
+<span class="block text-xs text-slate-400 mb-1">Plan</span>
+<span class="block font-semibold text-primary">Pro</span>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1 mb-3">Data Management</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+<button class="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+<span class="material-symbols-outlined">download</span>
+</div>
+<div class="text-left">
+<h4 class="font-semibold text-slate-800 dark:text-white text-sm">Export Data</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Save backup as JSON</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+<button class="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+<span class="material-symbols-outlined">upload</span>
+</div>
+<div class="text-left">
+<h4 class="font-semibold text-slate-800 dark:text-white text-sm">Import Data</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Restore from JSON backup</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+<div class="w-full p-4 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/20">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+<span class="material-symbols-outlined">cloud_sync</span>
+</div>
+<div class="text-left">
+<h4 class="font-semibold text-slate-800 dark:text-white text-sm">Last Synced</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Just now</p>
+</div>
+</div>
+<span class="text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-1 rounded-full">Active</span>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1 mb-3">Security</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+<span class="material-symbols-outlined">lock</span>
+</div>
+<div>
+<h4 class="font-semibold text-slate-800 dark:text-white text-sm">App Lock</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Require passcode on launch</p>
+</div>
+</div>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-5 border-slate-300" id="app-lock-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer" for="app-lock-toggle"></label>
+</div>
+</div>
+<button class="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 flex items-center justify-center">
+<span class="material-symbols-outlined">fingerprint</span>
+</div>
+<div class="text-left">
+<h4 class="font-semibold text-slate-800 dark:text-white text-sm">Biometrics</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">FaceID / TouchID settings</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+</div>
+</section>
+<section class="pb-8">
+<h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1 mb-3">About</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+<button class="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div class="text-left">
+<h4 class="font-semibold text-slate-800 dark:text-white text-sm">Hmatt Version</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">v2.4.0 (Build 2026)</p>
+</div>
+</div>
+</button>
+</div>
+<div class="mt-8 text-center space-y-4">
+<button class="text-expense font-medium text-sm flex items-center justify-center gap-2 w-full py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+<span class="material-symbols-outlined text-lg">logout</span>
+                    Sign Out
+                </button>
+<p class="text-xs text-slate-400">Made with ❤️ for financial freedom</p>
+</div>
+</section>
+</main>
+
+</body></html>

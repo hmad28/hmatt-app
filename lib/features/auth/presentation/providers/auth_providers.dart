@@ -11,6 +11,10 @@ class AuthController extends AsyncNotifier<AuthSession> {
   static const _sessionKey = 'session';
   static const _usersKey = 'users';
   static const _ownerBroadcastKey = 'owner_broadcast';
+  static const _loginAttemptsKey = 'login_attempts';
+  static const _minPasswordLength = 8;
+  static const _maxFailedAttempts = 5;
+  static const _lockMinutes = 5;
 
   @override
   Future<AuthSession> build() async {
@@ -41,6 +45,64 @@ class AuthController extends AsyncNotifier<AuthSession> {
     return raw?['message'] as String?;
   }
 
+  String? currentProfilePhotoPath() {
+    if (!Hive.isBoxOpen('auth_box')) {
+      return null;
+    }
+    final box = Hive.box<Map>('auth_box');
+    final session = box.get(_sessionKey);
+    final userId = (session?['userId'] as String?) ?? '';
+    if (userId.isEmpty) {
+      return null;
+    }
+
+    final users = _readUsers(box);
+    for (final user in users) {
+      if (user['id'] == userId) {
+        return user['profilePhotoPath'] as String?;
+      }
+    }
+    return null;
+  }
+
+  Future<void> updateCurrentProfilePhotoPath(String? path) async {
+    if (!Hive.isBoxOpen('auth_box')) {
+      return;
+    }
+    final box = Hive.box<Map>('auth_box');
+    final session = box.get(_sessionKey);
+    final userId = (session?['userId'] as String?) ?? '';
+    if (userId.isEmpty) {
+      return;
+    }
+
+    final users = _readUsers(box);
+    var updated = false;
+    for (final user in users) {
+      if (user['id'] != userId) {
+        continue;
+      }
+      if (path == null || path.trim().isEmpty) {
+        user.remove('profilePhotoPath');
+      } else {
+        user['profilePhotoPath'] = path.trim();
+      }
+      updated = true;
+      break;
+    }
+    if (!updated) {
+      return;
+    }
+    await box.put(_usersKey, {'items': users});
+    state = AsyncData(
+      AuthSession(
+        status: AuthStatus.authenticated,
+        identifier: session?['identifier'] as String?,
+        userId: userId,
+      ),
+    );
+  }
+
   Future<void> login({required String identifier, required String password}) async {
     state = const AsyncLoading();
     final username = identifier.trim();
@@ -51,6 +113,10 @@ class AuthController extends AsyncNotifier<AuthSession> {
     }
 
     final box = Hive.box<Map>('auth_box');
+    if (await _isLockedOut(box, username)) {
+      state = const AsyncData(AuthSession(status: AuthStatus.unauthenticated));
+      return;
+    }
     final users = _readUsers(box);
     Map<String, dynamic>? found;
     for (final user in users) {
@@ -60,6 +126,7 @@ class AuthController extends AsyncNotifier<AuthSession> {
       }
     }
     if (found == null) {
+      await _recordFailedAttempt(box, username);
       state = const AsyncData(AuthSession(status: AuthStatus.unauthenticated));
       return;
     }
@@ -74,9 +141,12 @@ class AuthController extends AsyncNotifier<AuthSession> {
     }
 
     if (!isValid) {
+      await _recordFailedAttempt(box, username);
       state = const AsyncData(AuthSession(status: AuthStatus.unauthenticated));
       return;
     }
+
+    await _clearFailedAttempts(box, username);
 
     final userId = found['id'] as String? ?? const Uuid().v4();
     if (found['id'] == null || passwordHash == null || passwordHash.isEmpty) {
@@ -109,7 +179,7 @@ class AuthController extends AsyncNotifier<AuthSession> {
     state = const AsyncLoading();
     final cleanUsername = username.trim();
     final cleanPassword = password.trim();
-    if (cleanUsername.isEmpty || cleanPassword.length < 4) {
+    if (cleanUsername.isEmpty || cleanPassword.length < _minPasswordLength) {
       state = const AsyncData(AuthSession(status: AuthStatus.unauthenticated));
       return;
     }
@@ -166,5 +236,64 @@ class AuthController extends AsyncNotifier<AuthSession> {
     return items
         .map((e) => Map<String, dynamic>.from(e as Map<dynamic, dynamic>))
         .toList();
+  }
+
+  Future<void> _recordFailedAttempt(Box<Map> box, String username) async {
+    final attempts = _readAttempts(box);
+    final key = username.toLowerCase();
+    final now = DateTime.now();
+    final entry = Map<String, dynamic>.from(attempts[key] ?? const <String, dynamic>{});
+    final count = (entry['count'] as int? ?? 0) + 1;
+    entry['count'] = count;
+    entry['lastFailedAt'] = now.toIso8601String();
+    if (count >= _maxFailedAttempts) {
+      entry['lockedUntil'] = now
+          .add(const Duration(minutes: _lockMinutes))
+          .toIso8601String();
+      entry['count'] = 0;
+    }
+    attempts[key] = entry;
+    await box.put(_loginAttemptsKey, {'items': attempts});
+  }
+
+  Future<void> _clearFailedAttempts(Box<Map> box, String username) async {
+    final attempts = _readAttempts(box);
+    final key = username.toLowerCase();
+    if (!attempts.containsKey(key)) {
+      return;
+    }
+    attempts.remove(key);
+    await box.put(_loginAttemptsKey, {'items': attempts});
+  }
+
+  Future<bool> _isLockedOut(Box<Map> box, String username) async {
+    final attempts = _readAttempts(box);
+    final key = username.toLowerCase();
+    final entry = attempts[key];
+    if (entry == null) {
+      return false;
+    }
+    final lockedUntil = DateTime.tryParse((entry['lockedUntil'] as String?) ?? '');
+    if (lockedUntil == null) {
+      return false;
+    }
+    if (lockedUntil.isAfter(DateTime.now())) {
+      return true;
+    }
+    attempts.remove(key);
+    await box.put(_loginAttemptsKey, {'items': attempts});
+    return false;
+  }
+
+  Map<String, Map<String, dynamic>> _readAttempts(Box<Map> box) {
+    final raw = box.get(_loginAttemptsKey);
+    final items = (raw?['items'] as Map?) ?? const <dynamic, dynamic>{};
+    final mapped = <String, Map<String, dynamic>>{};
+    for (final entry in items.entries) {
+      mapped[entry.key.toString()] = Map<String, dynamic>.from(
+        entry.value as Map<dynamic, dynamic>,
+      );
+    }
+    return mapped;
   }
 }

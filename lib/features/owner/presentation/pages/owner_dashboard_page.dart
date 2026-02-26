@@ -515,7 +515,18 @@ class _OwnerDashboardPageState extends ConsumerState<OwnerDashboardPage> {
 
   void _authorize() {
     final pin = _pinController.text.trim();
-    if (pin == AppEnv.ownerDashboardPin) {
+    final configuredPin = AppEnv.ownerDashboardPin.trim();
+    if (configuredPin.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'PIN owner belum dikonfigurasi. Set env OWNER_DASHBOARD_PIN saat build.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (pin == configuredPin) {
       setState(() => _isAuthorized = true);
       return;
     }

@@ -28,7 +28,12 @@ class AppEnv {
 
   static const ownerDashboardPin = String.fromEnvironment(
     'OWNER_DASHBOARD_PIN',
-    defaultValue: 'owner123',
+    defaultValue: '',
+  );
+
+  static const updateTrustedHosts = String.fromEnvironment(
+    'UPDATE_TRUSTED_HOSTS',
+    defaultValue: '',
   );
 
   static bool get useWorkerAuth => authMode.toLowerCase() == 'worker';

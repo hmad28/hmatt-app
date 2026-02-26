@@ -132,6 +132,7 @@ class TransactionsController extends AsyncNotifier<List<TransactionItem>> {
     String? account,
     String? category,
     String? transferToAccount,
+    String? proofImagePath,
   }) async {
     final userId = ref.read(_currentUserIdProvider);
     if (userId == null || userId.isEmpty) {
@@ -152,6 +153,7 @@ class TransactionsController extends AsyncNotifier<List<TransactionItem>> {
       account: account,
       category: category,
       transferToAccount: transferToAccount,
+      proofImagePath: proofImagePath,
     );
 
     await ref.read(_addTransactionUseCaseProvider).call(item);
@@ -161,6 +163,17 @@ class TransactionsController extends AsyncNotifier<List<TransactionItem>> {
   Future<void> remove(String id) async {
     final userId = ref.read(_currentUserIdProvider);
     if (userId == null || userId.isEmpty) {
+      return;
+    }
+    final currentItems = state.valueOrNull ?? const <TransactionItem>[];
+    TransactionItem? target;
+    for (final item in currentItems) {
+      if (item.id == id) {
+        target = item;
+        break;
+      }
+    }
+    if (target == null || target.userId != userId) {
       return;
     }
     await ref.read(_deleteTransactionUseCaseProvider).call(id);
@@ -253,6 +266,17 @@ class AccountsController extends AsyncNotifier<List<FinanceAccount>> {
     if (userId == null || userId.isEmpty) {
       return;
     }
+    final currentItems = state.valueOrNull ?? const <FinanceAccount>[];
+    FinanceAccount? target;
+    for (final item in currentItems) {
+      if (item.id == id) {
+        target = item;
+        break;
+      }
+    }
+    if (target == null || target.userId != userId) {
+      return;
+    }
     await ref.read(_deleteAccountUseCaseProvider).call(id);
     state = AsyncData(await ref.read(_getAccountsUseCaseProvider).call(userId));
   }
@@ -340,6 +364,17 @@ class CategoriesController extends AsyncNotifier<List<FinanceCategory>> {
   Future<void> delete(String id) async {
     final userId = ref.read(_currentUserIdProvider);
     if (userId == null || userId.isEmpty) {
+      return;
+    }
+    final currentItems = state.valueOrNull ?? const <FinanceCategory>[];
+    FinanceCategory? target;
+    for (final item in currentItems) {
+      if (item.id == id) {
+        target = item;
+        break;
+      }
+    }
+    if (target == null || target.userId != userId) {
       return;
     }
     await ref.read(_deleteCategoryUseCaseProvider).call(id);
